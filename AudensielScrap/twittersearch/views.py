@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 import time
 from selenium.webdriver.firefox.options import Options
 
-#installer selenium webdriver bs4 
+#installer selenium webdriver beautifulsoup4 
 
 def get_tweets(request, mot_cle):
     options = webdriver.ChromeOptions()
