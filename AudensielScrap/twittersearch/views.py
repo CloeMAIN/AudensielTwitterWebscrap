@@ -13,48 +13,41 @@ def get_tweets(request, mot_cle):
     options = webdriver.ChromeOptions()
     options.add_argument("--enable-javascript")
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
-    # Create a new Chrome browser instance with the specified options
+    # Creation Chrome browser : connexion automatique
     bot = webdriver.Chrome(options=options)
 
-    # Navigate to the login page
+    # Navigation page login
     bot.get('https://twitter.com/i/flow/login')
 
-    # Wait for the email input field to be present
+    # Attends que la section où écrire le mail soit présente
     username_input = WebDriverWait(bot, 10).until(
     EC.presence_of_element_located((By.CLASS_NAME, 'r-1yadl64'))
 )
-    username_input.send_keys('Koolashley21')
+    username_input.send_keys('scrapapiS7@gmail.com')
 
-    # Wait for the "Suivant" button to be clickable
+    # Attends qu'on puisse apppuyé sur le bouton suivant 
     button = bot.find_element(By.CSS_SELECTOR, 'div.css-1dbjc4n.r-6koalj.r-16y2uox div.css-1dbjc4n.r-16y2uox.r-1jgb5lz.r-13qz1uu div:nth-child(6)')
-# Perform actions on the button (e.g., click)
+    # Appuie sur le bouton 
     button.click()
 
 
-    # Wait for the password input field to be present
+     # Attends que la section où écrire le mdp soit présente et y écrire le mdp
     password_input = WebDriverWait(bot, 10).until(
         EC.presence_of_element_located((By.CSS_SELECTOR, 'div.css-1dbjc4n.r-mk0yit.r-13qz1uu label > div > div input')))
-            
-
- # class="r-30o5oe r-1niwhzg r-17gur6a r-1yadl64 r-deolkf r-homxoj r-poiln3 r-7cikom r-1ny4l3l r-t60dpp r-1dz5y72 r-fdjqy7 r-13qz1uu
-    # Enter email and password
-    
-    password_input.send_keys('Ashleyaïsma2021')
-
-    # Submit the form
+    password_input.send_keys('aMkiuzi77/P')
     password_input.send_keys(Keys.RETURN)
 
-    # Wait for some time to let the page load
+    # Attends que la page se charge
     time.sleep(5)
 
-     # Naviguer vers la page de recherche
+     # Navigation page de recherche 
     search_url = f'https://twitter.com/search?q={mot_cle}&src=typed_query'
     bot.get(search_url)
 
-    
+     # Attends que la page se charge
     time.sleep(20)
 
-    # Définir le nombre maximum de défilements (ajustez selon vos besoins)
+    # Définir le nombre maximum de défilements 
     max_scrolls = 50
     scroll_count = 0
 
