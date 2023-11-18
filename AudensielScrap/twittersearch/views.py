@@ -9,7 +9,7 @@ import time
 from selenium.webdriver.firefox.options import Options
 
 #installer selenium webdriver beautifulsoup4 
-
+# ex de requête : GET http://localhost:8000/api/search/taylor/
 def get_tweets(request, mot_cle):
     options = webdriver.ChromeOptions()
     options.add_argument("--enable-javascript")
