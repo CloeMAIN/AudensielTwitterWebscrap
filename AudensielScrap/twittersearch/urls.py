@@ -1,7 +1,8 @@
 # twittersearch/urls.py
 from django.urls import path
-from .views import twittersearch
+from . import views
 
 urlpatterns = [
-    path('tweets/<str:keyword>/', twittersearch, name='get_tweets'),
-]
+            path('search/<str:mot_cle>/', views.get_tweets, name='search')
+        ]
+            
