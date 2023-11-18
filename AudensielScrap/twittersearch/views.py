@@ -8,6 +8,7 @@ from bs4 import BeautifulSoup
 import time
 from selenium.webdriver.firefox.options import Options
 
+#installer selenium webdriver bs4 
 
 def get_tweets(request, mot_cle):
     options = webdriver.ChromeOptions()
@@ -63,7 +64,7 @@ def get_tweets(request, mot_cle):
 
         # Extraire le contenu de la page avec BeautifulSoup
         soup = BeautifulSoup(bot.page_source, 'html.parser')
-        tweet_elements = soup.select('div.css-1dbjc4n span.css-901oao')
+        tweet_elements = soup.select('div.css-1dbjc4n span.css-901oao') # pas le bon code pour le moment
 
         # Ajouter les tweets à la liste
         tweets.extend([tweet.get_text() for tweet in tweet_elements])
