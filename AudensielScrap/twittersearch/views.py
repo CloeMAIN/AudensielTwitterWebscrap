@@ -64,15 +64,13 @@ def get_tweets(request, mot_cle):
     time.sleep(20)
 
     # Définir le nombre maximum de défilements 
-    max_scrolls = 5
+    max_scrolls = 50
     scroll_count = 0
 
     # Collecter les tweets
     tweets = []
 
    
-    
- 
     while scroll_count < max_scrolls:
         # Faire défiler la page
         bot.execute_script("window.scrollTo(0, document.body.scrollHeight);")
@@ -81,11 +79,29 @@ def get_tweets(request, mot_cle):
         time.sleep(2)
 
         # Extraire le contenu de la page avec BeautifulSoup
-        soup = BeautifulSoup(bot.page_source, 'html.parser')
-        tweet_elements = soup.select('div.css-1dbjc4n span.css-901oao')
+        soup = BeautifulSoup(bot.page_source, 'html.parser') #Crée un objet BeautifulSoup à partir du code source de la page qui contient tout ce qui compose la page html
+        
+        # Trouver les tweets grace au data-testid spécifique
+        tweet_elements = soup.find(attrs={'data-testid': 'tweet'}) # Ici je vais rechercher les tweets grace à l'identifiant.
+        
+        
+        ## On décortique les tweets pour en extraire les informations qui nous intéressent
+        ## Trouver l'élément contenant le texte du tweet
+        tweet_div_text = tweet_elements.find(attrs={'data-testid': 'tweetText'})
+        tweet_text = tweet_div_text.get_text(strip=True)
+       
+        ## Trouver l'élément contenant les informations sur les vues, les réponses, les likes, etc.
+        details_tweet = tweet_elements.find('div', {'aria-label': True})
 
-        # Ajouter les tweets à la liste
-        tweets.extend([tweet.get_text() for tweet in tweet_elements])
+        # Modèle regex pour extraire les informations (nombre + texte)
+        pattern = r'(\d+)\s+(\w+)'
+
+        # Recherche des correspondances dans la chaîne
+        matches = re.findall(pattern, details_tweet)
+
+        # Ajouter les données des tweets à la liste
+        tweets.extend(tweet_text)
+        tweets.extend(matches)
 
         scroll_count += 1
 
