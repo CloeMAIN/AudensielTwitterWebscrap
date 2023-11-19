@@ -64,7 +64,7 @@ def get_tweets(request, mot_cle):
     time.sleep(20)
 
     # Définir le nombre maximum de défilements 
-    max_scrolls = 50
+    max_scrolls = 5
     scroll_count = 0
 
     # Collecter les tweets
@@ -81,27 +81,34 @@ def get_tweets(request, mot_cle):
         # Extraire le contenu de la page avec BeautifulSoup
         soup = BeautifulSoup(bot.page_source, 'html.parser') #Crée un objet BeautifulSoup à partir du code source de la page qui contient tout ce qui compose la page html
         
-        # Trouver les tweets grace au data-testid spécifique
-        tweet_elements = soup.find(attrs={'data-testid': 'tweet'}) # Ici je vais rechercher les tweets grace à l'identifiant.
-        
-        
-        ## On décortique les tweets pour en extraire les informations qui nous intéressent
-        ## Trouver l'élément contenant le texte du tweet
-        tweet_div_text = tweet_elements.find(attrs={'data-testid': 'tweetText'})
-        tweet_text = tweet_div_text.get_text(strip=True)
-       
-        ## Trouver l'élément contenant les informations sur les vues, les réponses, les likes, etc.
-        details_tweet = tweet_elements.find('div', {'aria-label': True})
+       # Trouver les tweets grâce au data-testid spécifique
+        tweet_elements = soup.find_all(attrs={'data-testid': 'tweet'})  # Use find_all to get a list of tweet elements
 
-        # Modèle regex pour extraire les informations (nombre + texte)
-        pattern = r'(\d+)\s+(\w+)'
+        # Iterate through each tweet element
+        for tweet_element in tweet_elements:
+            # On décortique les tweets pour en extraire les informations qui nous intéressent
+            # Trouver l'élément contenant le texte du tweet
+            tweet_div_text = tweet_element.find(attrs={'data-testid': 'tweetText'})
+            tweet_text = tweet_div_text.get_text(strip=True)
 
-        # Recherche des correspondances dans la chaîne
-        matches = re.findall(pattern, details_tweet)
+            # Trouver l'élément contenant les informations sur les vues, les réponses, les likes, etc.
+            details_tweet = tweet_element.find('div', {'aria-label': True})
 
-        # Ajouter les données des tweets à la liste
-        tweets.extend(tweet_text)
-        tweets.extend(matches)
+            # Convert the details_tweet element to a string
+            details_tweet_str = str(details_tweet)
+
+            # Modèle regex pour extraire les informations (nombre + texte)
+            pattern = r'(\d+)\s+(\w+)'
+
+            # Recherche des correspondances dans la chaîne
+            matches = re.findall(pattern, details_tweet_str)
+
+            # Convert matches to strings before extending the list
+            matches_str = [f"{match[0]} {match[1]}" for match in matches]
+
+            # Ajouter les données des tweets à la liste
+            tweets.append(tweet_text)
+            tweets.extend(matches_str)
 
         scroll_count += 1
 
