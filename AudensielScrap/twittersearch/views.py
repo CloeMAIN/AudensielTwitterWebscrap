@@ -82,16 +82,23 @@ def get_tweets(request, mot_cle):
 
         # Extraire le contenu de la page avec BeautifulSoup
         soup = BeautifulSoup(bot.page_source, 'html.parser')
-       
-        #Mettre la page dans un fichier html  : rajouter dans le fichier html pas ecraser le fichier
-        with open('page.html', 'a', encoding='utf-8') as file:
-            file.write(soup.prettify())
-            
+        tweet_elements = soup.select('div.css-1dbjc4n span.css-901oao')
+
+        # Ajouter les tweets à la liste
+        tweets.extend([tweet.get_text() for tweet in tweet_elements])
+
+        scroll_count += 1
+
     # Construire une réponse avec les tweets
-  
+    response_text = "\n".join(tweets)
 
     # Fermer le navigateur
     bot.quit()
-    file.close()
-    return HttpResponse(soup.prettify())
+    
+   
+    with open('twitter.html', 'w', encoding='utf-8') as f:
+        f.write(soup.prettify())
+        
+    # Retourner le texte de réponse en tant qu'objet HttpResponse
+    return HttpResponse(response_text, content_type='text/plain')
 
