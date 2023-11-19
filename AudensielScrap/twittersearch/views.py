@@ -7,6 +7,7 @@ from selenium.webdriver.common.keys import Keys
 from bs4 import BeautifulSoup
 import time
 from selenium.webdriver.firefox.options import Options
+import re
 
 #installer selenium webdriver beautifulsoup4 
 # ex de requête : GET http://localhost:8000/api/search/taylor/
@@ -24,13 +25,27 @@ def get_tweets(request, mot_cle):
     username_input = WebDriverWait(bot, 10).until(
     EC.presence_of_element_located((By.CLASS_NAME, 'r-1yadl64'))
 )
-    username_input.send_keys('scrapapiS7@gmail.com')
+    username_input.send_keys('@UserNumber59901')
 
     # Attends qu'on puisse apppuyé sur le bouton suivant 
     button = bot.find_element(By.CSS_SELECTOR, 'div.css-1dbjc4n.r-6koalj.r-16y2uox div.css-1dbjc4n.r-16y2uox.r-1jgb5lz.r-13qz1uu div:nth-child(6)')
     # Appuie sur le bouton 
     button.click()
-
+    
+    # # Vérification si le message de vérification apparaît
+    # try:
+    #     username_input = WebDriverWait(bot, 10).until(
+    #         EC.presence_of_element_located((By.CLASS_NAME, 'r-1yadl64')))
+        
+    #     # Si le message apparaît, remplir le champ avec le nom d'utilisateur
+    #     username = "@UserNumber59901"  # Remplacez ceci par votre nom d'utilisateur
+    #     username_input.send_keys(username)
+    #     # Cliquez sur le bouton "Suivant"
+    #     button = bot.find_element(By.CSS_SELECTOR, 'div.css-1dbjc4n.r-1m3jxhj.r-sdzlij.r-1phboty.r-rs99b7.r-19yznuf r-64el8z r-icoktb r-1ny4l3l r-1dye5f7 r-o7ynqc r-6416eg r-lrvibr')
+    #     button.click()
+    
+    # except TimeoutException:
+    #     pass
 
      # Attends que la section où écrire le mdp soit présente et y écrire le mdp
     password_input = WebDriverWait(bot, 10).until(
@@ -63,11 +78,28 @@ def get_tweets(request, mot_cle):
         time.sleep(2)
 
         # Extraire le contenu de la page avec BeautifulSoup
-        soup = BeautifulSoup(bot.page_source, 'html.parser')
-        tweet_elements = soup.select('div.css-1dbjc4n span.css-901oao') # pas le bon code pour le moment
+        soup = BeautifulSoup(bot.page_source, 'html.parser') #Crée un objet BeautifulSoup à partir du code source de la page qui contient tout ce qui compose la page html
+        
+        # Trouver les tweets grace au data-testid spécifique
+        tweet_elements = soup.find(attrs={'data-testid': 'tweet'}) # Ici je vais rechercher les tweets grace à l'identifiant.
+        
+        ## On décortique les tweets pour en extraire les informations qui nous intéressent
+        ## Trouver l'élément contenant le texte du tweet
+        tweet_div_text = tweet_elements.find(attrs={'data-testid': 'tweetText'})
+        tweet_text = tweet_div_text.get_text(strip=True)
+       
+        ## Trouver l'élément contenant les informations sur les vues, les réponses, les likes, etc.
+        details_tweet = tweet_elements.find('div', {'aria-label': True})
 
-        # Ajouter les tweets à la liste
-        tweets.extend([tweet.get_text() for tweet in tweet_elements])
+        # Modèle regex pour extraire les informations (nombre + texte)
+        pattern = r'(\d+)\s+(\w+)'
+
+        # Recherche des correspondances dans la chaîne
+        matches = re.findall(pattern, details_tweet)
+
+        # Ajouter les données des tweets à la liste
+        tweets.extend(tweet_text)
+        tweets.extend(matches)
 
         scroll_count += 1
 
