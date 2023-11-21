@@ -1,3 +1,6 @@
 from django.db import models
+from djongo import models as djongomodels
 
-# Create your models here.
+class TweetModele(models.Model):
+    id = djongomodels.IntegerField(primary_key=True)
+    tweet = djongomodels.TextField()

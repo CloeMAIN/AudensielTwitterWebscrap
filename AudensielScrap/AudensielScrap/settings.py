@@ -74,11 +74,23 @@ WSGI_APPLICATION = 'AudensielScrap.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
-DATABASES = {
+DATADATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+        'ENGINE': 'djongo',
+        'CLIENT': {
+            'host':'mongodb+srv://cloe:Webscrap23@cluster0.qnvy73r.mongodb.net/',
+            'name':"Cluster0", 
+            'authMechanism': 'SCRAM-SHA-1',
+        },
+    },
+    'auth': {
+        'ENGINE': 'djongo',
+        'CLIENT': {
+            'host':'mongodb+srv://cloe:Webscrap23@cluster0.qnvy73r.mongodb.net/',
+            'name':"Audensiel2",
+            'authMechanism': 'SCRAM-SHA-1',
+        },
+    },
 }
 
 

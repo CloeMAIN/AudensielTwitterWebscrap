@@ -8,6 +8,9 @@ from bs4 import BeautifulSoup
 import time
 from selenium.webdriver.firefox.options import Options
 import re
+from django.shortcuts import render
+from .models import TweetModele
+
 
 #installer selenium webdriver beautifulsoup4 
 # ex de requête : GET http://localhost:8000/api/search/taylor/
@@ -92,23 +95,27 @@ def get_tweets(request, mot_cle):
             tweet_text = tweet_div_text.get_text(strip=True)
 
             # Trouver l'élément contenant les informations sur les vues, les réponses, les likes, etc.
-            details_tweet = tweet_element.find('div', {'aria-label': True})
+            # details_tweet = tweet_element.find('div', {'aria-label': True})
 
             # Convert the details_tweet element to a string
-            details_tweet_str = str(details_tweet)
+            # details_tweet_str = str(details_tweet)
 
             # Modèle regex pour extraire les informations (nombre + texte)
-            pattern = r'(\d+)\s+(\w+)'
+            # pattern = r'(\d+)\s+(\w+)'
 
             # Recherche des correspondances dans la chaîne
-            matches = re.findall(pattern, details_tweet_str)
+            # matches = re.findall(pattern, details_tweet_str)
 
             # Convert matches to strings before extending the list
-            matches_str = [f"{match[0]} {match[1]}" for match in matches]
+            # matches_str = [f"{match[0]} {match[1]}" for match in matches]
 
             # Ajouter les données des tweets à la liste
-            tweets.append(tweet_text)
-            tweets.extend(matches_str)
+            # tweets.append(tweet_text)
+
+            # Créez une instance de TweetModele et enregistrez la chaîne dans le champ "tweet"
+            nouveau_tweet = TweetModele(tweet=tweet_text)
+            nouveau_tweet.save()
+            # tweets.extend(matches_str)
 
         scroll_count += 1
 
