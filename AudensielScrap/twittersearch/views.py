@@ -28,7 +28,8 @@ def get_tweets(request, mot_cle):
     username_input.send_keys('@UserNumber59901')
 
     # Attends qu'on puisse apppuyé sur le bouton suivant 
-    button = bot.find_element(By.CSS_SELECTOR, 'div.css-1dbjc4n.r-6koalj.r-16y2uox div.css-1dbjc4n.r-16y2uox.r-1jgb5lz.r-13qz1uu div:nth-child(6)')
+    button = bot.find_element(By.CSS_SELECTOR, ' div.css-175oi2r.r-1ny4l3l.r-6koalj.r-16y2uox div.css-175oi2r.r-16y2uox.r-1jgb5lz.r-13qz1uu div:nth-child(6)')
+    
     # Appuie sur le bouton 
     button.click()
     
@@ -47,24 +48,26 @@ def get_tweets(request, mot_cle):
     # except TimeoutException:
     #     pass
 
-     # Attends que la section où écrire le mdp soit présente et y écrire le mdp
+    # Attends que la section où écrire le mdp soit présente et y écrire le mdp
     password_input = WebDriverWait(bot, 10).until(
-        EC.presence_of_element_located((By.CSS_SELECTOR, 'div.css-1dbjc4n.r-mk0yit.r-13qz1uu label > div > div input')))
+        EC.presence_of_element_located((By.CSS_SELECTOR, 'div.css-175oi2r input[type="password"]')))
     password_input.send_keys('aMkiuzi77/P')
     password_input.send_keys(Keys.RETURN)
-
+    #div.css-175oi2r.r-1ny4l3l.r-6koalj.r-16y2uox div.css-175oi2r.r-16y2uox.r-1jgb5lz.r-13qz1uu.r-1ye8kvj div.css-175oi2r.r-1fq43b1.r-16y2uox.r-1wbh5a2.r-1dqxon3 div.css-175oi2r.r-mk0yit.r-13qz1uu div.css-175oi2r.r-18u37iz.r-16y2uox.r-1wbh5a2.r-1wzrnnt.r-1udh08x.r-xd6kpl.r-1pn2ns4.r-ttdzmv > div.css-1rynq56.r-bcqeeo.r-qvutc0.r-37j5jr.r-135wba7.r-16dba41.r-1awozwy.r-6koalj.r-1inkyih.r-13qz1uu > input
     # Attends que la page se charge
     time.sleep(5)
 
      # Navigation page de recherche 
-    search_url = f'https://twitter.com/search?q={mot_cle}&src=typed_query'
+    search_url = f'https://twitter.com/search?q={mot_cle}&src=typed_query&f=live'
     bot.get(search_url)
 
      # Attends que la page se charge
     time.sleep(20)
 
     # Définir le nombre maximum de défilements 
-    max_scrolls = 5
+    max_scrolls = 5 # pb de scrolls qui peut être detecté par twitter
+    # pouvoir def la date de début et de fin de la recherche
+    
     scroll_count = 0
 
     # Collecter les tweets
@@ -124,4 +127,3 @@ def get_tweets(request, mot_cle):
         
     # Retourner le texte de réponse en tant qu'objet HttpResponse
     return HttpResponse(response_text, content_type='text/plain')
-
