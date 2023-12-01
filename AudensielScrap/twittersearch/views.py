@@ -11,13 +11,8 @@ import re
 
 #installer selenium webdriver beautifulsoup4 
 # ex de requête : GET http://localhost:8000/api/search/taylor/
-def get_tweets(request, mot_cle):
-    options = webdriver.ChromeOptions()
-    options.add_argument("--enable-javascript")
-    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
-    # Creation Chrome browser : connexion automatique
-    bot = webdriver.Chrome(options=options)
 
+def login(bot):
     # Navigation page login
     bot.get('https://twitter.com/i/flow/login')
 
@@ -41,6 +36,16 @@ def get_tweets(request, mot_cle):
     password_input.send_keys(Keys.RETURN)
     #div.css-175oi2r.r-1ny4l3l.r-6koalj.r-16y2uox div.css-175oi2r.r-16y2uox.r-1jgb5lz.r-13qz1uu.r-1ye8kvj div.css-175oi2r.r-1fq43b1.r-16y2uox.r-1wbh5a2.r-1dqxon3 div.css-175oi2r.r-mk0yit.r-13qz1uu div.css-175oi2r.r-18u37iz.r-16y2uox.r-1wbh5a2.r-1wzrnnt.r-1udh08x.r-xd6kpl.r-1pn2ns4.r-ttdzmv > div.css-1rynq56.r-bcqeeo.r-qvutc0.r-37j5jr.r-135wba7.r-16dba41.r-1awozwy.r-6koalj.r-1inkyih.r-13qz1uu > input
     # Attends que la page se charge
+    
+def get_tweets(request, mot_cle):
+    options = webdriver.ChromeOptions()
+    options.add_argument("--enable-javascript")
+    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
+    # Creation Chrome browser : connexion automatique
+    bot = webdriver.Chrome(options=options)
+    
+    login(bot)
+    
     time.sleep(5)
 
      # Navigation page de recherche 
