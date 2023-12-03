@@ -1,6 +1,5 @@
 from django.db import models
-from djongo import models as djongomodels
+from db_connection import db
 
-class TweetModele(models.Model):
-    id = djongomodels.IntegerField(primary_key=True)
-    tweet = djongomodels.TextField()
+# Create your models here.
+tweet_collection = db['tweets']

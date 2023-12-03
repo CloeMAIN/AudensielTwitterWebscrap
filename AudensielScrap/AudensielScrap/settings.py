@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-62f-3=v7_k3+kq=40j(%q)%u-e3goqiqv&ca)a^1p9&c*&*&*%
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'twittersearch.apps.TwittersearchConfig',
+    'djongo',
 ]
 
 MIDDLEWARE = [
@@ -74,24 +75,19 @@ WSGI_APPLICATION = 'AudensielScrap.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
-DATADATABASES = {
-    'default': {
-        'ENGINE': 'djongo',
-        'CLIENT': {
-            'host':'mongodb+srv://cloe:Webscrap23@cluster0.qnvy73r.mongodb.net/',
-            'name':"Cluster0", 
-            'authMechanism': 'SCRAM-SHA-1',
-        },
-    }
-    # 'auth': {
-    #     'ENGINE': 'djongo',
-    #     'CLIENT': {
-    #         'host':'mongodb+srv://cloe:Webscrap23@cluster0.qnvy73r.mongodb.net/',
-    #         'name':"Audensiel2",
-    #         'authMechanism': 'SCRAM-SHA-1',
-    #     },
-    # },
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'djongo',
+#         'NAME': 'Tweets',
+#         # 'CLIENT': {
+#         #     'host': 'cluster0.qnvy73r.mongodb.net',
+#         #     'name': 'Tweets_recoltés',
+#         #     'username': 'cloe',
+#         #     'password': 'Webscrap23',
+#         #     'authMechanism': 'SCRAM-SHA-1',
+#         # },
+#     },
+# }
 
 
 # Password validation
@@ -128,7 +124,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field

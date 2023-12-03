@@ -10,7 +10,7 @@ import time
 import random
 import re
 from django.shortcuts import render
-from .models import TweetModele
+from .models import tweet_collection
 
 # Fonction pour effectuer le login
 def login(bot):
@@ -57,10 +57,12 @@ def perform_scroll(bot):
 #Fonction pour enregistrer les tweets dans la base de données MongoDB
 def save_tweets(tweets):
     for tweet in tweets:
-        tweet_modele = TweetModele()
-        tweet_modele.text = tweet
-        tweet_modele.save()
-
+        records= {
+            #id s'incrémentera automatiquement
+            "tewt_tweet" : tweet, 
+        }
+        tweet_collection.insert_one({'tweet': tweet})
+    
 
 # Fonction principale
 def get_tweets(request, mot_cle, until_date, since_date):
@@ -103,7 +105,7 @@ def get_tweets(request, mot_cle, until_date, since_date):
     time.sleep(20)
 
     # Définir le nombre maximum de défilements
-    max_scrolls = 10  # Par exemple, 100 scrolls
+    max_scrolls = 5  # Par exemple, 100 scrolls
     scroll_count = 0
     nombre_tweets = 0
     tweets = []
