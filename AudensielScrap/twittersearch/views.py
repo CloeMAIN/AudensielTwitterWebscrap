@@ -89,7 +89,7 @@ def get_tweets(request, mot_cle, until_date, since_date):
     login(bot)
 
     # Navigation page de recherche
-    search_url = f'https://twitter.com/search?q={mot_cle}%20until%{until_date}%20since%{since_date}&src=typed_query&f=live'
+    search_url = f'https://twitter.com/search?q={mot_cle}%20until%3A{until_date}%20since%3A{since_date}&src=typed_query&f=live'
     bot.get(search_url)
 
     # Attendre que la page se charge
