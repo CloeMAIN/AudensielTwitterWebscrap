@@ -12,6 +12,37 @@ import re
 from django.shortcuts import render
 from .models import tweet_collection
 
+
+# Classe pour stocker les données collectées afin de pouvoir les enregistrer dans la base de données MongoDB
+class DonneeCollectee:
+    def __init__(self, text_tweet, nombre_likes, nombre_reposts, nombre_replies, nombre_views):
+        self.text_tweet = text_tweet
+        if (nombre_likes == ""):
+            self.nombre_likes = 0
+        else:
+            self.nombre_likes = int(nombre_likes)
+        if (nombre_reposts == ""):
+            self.nombre_reposts = 0
+        else:
+            self.nombre_reposts = int(nombre_reposts)
+        if (nombre_replies == ""):
+            self.nombre_replies = 0
+        else:
+            self.nombre_replies = int(nombre_replies)
+        if (nombre_views == ""):
+            self.nombre_views = 0
+        else:
+            self.nombre_views = int(nombre_views)
+
+    def to_dict(self):
+        return {
+            "text_tweet": self.text_tweet,
+            "nombre_likes": self.nombre_likes,
+            "nombre_reposts": self.nombre_reposts,
+            "nombre_replies": self.nombre_replies,
+            "nombre_views": self.nombre_views
+        }
+
 # Fonction pour effectuer le login
 def login(bot):
     # Navigation page login
@@ -37,6 +68,7 @@ def login(bot):
 
     # Attendre un court délai pour le chargement après le login
     time.sleep(random.uniform(2, 5))
+
 def random_sleep():
     time.sleep(random.uniform(2, 5))
     
@@ -57,11 +89,16 @@ def perform_scroll(bot):
 #Fonction pour enregistrer les tweets dans la base de données MongoDB
 def save_tweets(tweets):
     for tweet in tweets:
+        dico_tweet = tweet.to_dict()
         records= {
             #id s'incrémentera automatiquement
-            "tewt_tweet" : tweet, 
+            "text_tweet" : dico_tweet['text_tweet'], 
+            "nombre_likes" : dico_tweet['nombre_likes'],
+            "nombre_reposts" : dico_tweet['nombre_reposts'],
+            "nombre_replies" : dico_tweet['nombre_replies'],
+            "nombre_views" : dico_tweet['nombre_views']
         }
-        tweet_collection.insert_one({'tweet': tweet})
+        tweet_collection.insert_one({'tweet': records})
     
 
 # Fonction principale
@@ -105,7 +142,7 @@ def get_tweets(request, mot_cle, until_date, since_date):
     time.sleep(20)
 
     # Définir le nombre maximum de défilements
-    max_scrolls = 5  # Par exemple, 100 scrolls
+    max_scrolls = 2  # Par exemple, 100 scrolls
     scroll_count = 0
     nombre_tweets = 0
     tweets = []
@@ -130,31 +167,30 @@ def get_tweets(request, mot_cle, until_date, since_date):
         # Trouver les tweets grâce au data-testid spécifique
         tweet_elements = soup.find_all(attrs={'data-testid': 'tweet'})
 
+        response_text = ""
+
         for tweet_element in tweet_elements:
             tweet_div_text = tweet_element.find(attrs={'data-testid': 'tweetText'})
             if tweet_div_text is not None:
-                tweet_text = tweet_div_text.get_text(strip=True)
+                tweet_text = tweet_div_text.get_text(strip=True) 
             else:
                 continue
 
-            details_tweet = tweet_element.find('div', {'aria-label': True})
-            details_tweet_str = str(details_tweet)
-
-            pattern = r'(\d+)\s+(\w+)'
-            matches = re.findall(pattern, details_tweet_str)
-            matches_str = [f"{match[0]} {match[1]}" for match in matches]
+            details = tweet_element.find_all(attrs={'data-testid': 'app-text-transition-container'})
+            replies = details[0].get_text(strip=True)
+            reposts = details[1].get_text(strip=True)
+            likes = details[2].get_text(strip=True)
+            views = details[3].get_text(strip=True)
 
             if mot_cle in tweet_text:
-                tweets.append(tweet_text)
-                tweets.extend(matches_str)
+                tweets.append(DonneeCollectee(tweet_text, likes, reposts, replies, views))
                 nombre_tweets += 1
+                response_text += ("\n" + tweet_text)
 
         print(f"Scroll count: {scroll_count}")
         scroll_count += 1
 
     print(f"Nombre de tweets : {nombre_tweets}")
-    # Construire une réponse avec les tweets
-    response_text = "\n".join(tweets)
 
     # Fermer le navigateur
     bot.quit()
@@ -163,7 +199,7 @@ def get_tweets(request, mot_cle, until_date, since_date):
         f.write(soup.prettify())
 
     # Enregistrer les tweets dans la base de données MongoDB
-    save_tweets(response_text.split('\n'))
+    save_tweets(tweets) # On donne la liste des structures de données contenant les tweets pour les enregistrer dans la base de données MongoDB
 
     # Retourner le texte de réponse en tant qu'objet HttpResponse
     return HttpResponse(response_text, content_type='text/plain')
