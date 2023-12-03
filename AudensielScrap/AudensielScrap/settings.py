@@ -82,15 +82,15 @@ DATADATABASES = {
             'name':"Cluster0", 
             'authMechanism': 'SCRAM-SHA-1',
         },
-    },
-    'auth': {
-        'ENGINE': 'djongo',
-        'CLIENT': {
-            'host':'mongodb+srv://cloe:Webscrap23@cluster0.qnvy73r.mongodb.net/',
-            'name':"Audensiel2",
-            'authMechanism': 'SCRAM-SHA-1',
-        },
-    },
+    }
+    # 'auth': {
+    #     'ENGINE': 'djongo',
+    #     'CLIENT': {
+    #         'host':'mongodb+srv://cloe:Webscrap23@cluster0.qnvy73r.mongodb.net/',
+    #         'name':"Audensiel2",
+    #         'authMechanism': 'SCRAM-SHA-1',
+    #     },
+    # },
 }
 
 

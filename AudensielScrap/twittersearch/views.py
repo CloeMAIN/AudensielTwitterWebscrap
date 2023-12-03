@@ -54,6 +54,13 @@ def perform_scroll(bot):
     time.sleep(random.uniform(2, 5))
 
 
+#Fonction pour enregistrer les tweets dans la base de données MongoDB
+def save_tweets(tweets):
+    for tweet in tweets:
+        tweet_modele = TweetModele()
+        tweet_modele.text = tweet
+        tweet_modele.save()
+
 
 # Fonction principale
 def get_tweets(request, mot_cle, until_date, since_date):
@@ -96,7 +103,7 @@ def get_tweets(request, mot_cle, until_date, since_date):
     time.sleep(20)
 
     # Définir le nombre maximum de défilements
-    max_scrolls = 100  # Par exemple, 100 scrolls
+    max_scrolls = 10  # Par exemple, 100 scrolls
     scroll_count = 0
     nombre_tweets = 0
     tweets = []
@@ -153,5 +160,10 @@ def get_tweets(request, mot_cle, until_date, since_date):
     with open('twitter.html', 'w', encoding='utf-8') as f:
         f.write(soup.prettify())
 
+    # Enregistrer les tweets dans la base de données MongoDB
+    save_tweets(response_text.split('\n'))
+
     # Retourner le texte de réponse en tant qu'objet HttpResponse
     return HttpResponse(response_text, content_type='text/plain')
+
+
