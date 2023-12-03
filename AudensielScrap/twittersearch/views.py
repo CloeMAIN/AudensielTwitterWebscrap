@@ -176,11 +176,18 @@ def get_tweets(request, mot_cle, until_date, since_date):
             else:
                 continue
 
+            #On récupère les détails du tweet
             details = tweet_element.find_all(attrs={'data-testid': 'app-text-transition-container'})
             replies = details[0].get_text(strip=True)
             reposts = details[1].get_text(strip=True)
             likes = details[2].get_text(strip=True)
             views = details[3].get_text(strip=True)
+
+            #On récupère la date du tweet
+            user_info = tweet_element.find(attrs={'data-testid' : 'User-Name'}).find('a').find('time')
+            # date = user_info['datetime']
+            print(user_info)
+
 
             if mot_cle in tweet_text:
                 tweets.append(DonneeCollectee(tweet_text, likes, reposts, replies, views))
