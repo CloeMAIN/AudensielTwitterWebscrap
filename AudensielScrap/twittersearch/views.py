@@ -20,19 +20,42 @@ class DonneeCollectee:
         if (nombre_likes == ""):
             self.nombre_likes = 0
         else:
-            self.nombre_likes = int(nombre_likes)
+            if (nombre_likes[-1] == "K"): # Si le nombre de likes est exprimé en milliers
+                self.nombre_likes = int(float(nombre_likes[:-1]) * 1000)
+            elif (nombre_likes[-1] == "M"): # Si le nombre de likes est exprimé en millions
+                self.nombre_likes = int(float(nombre_likes[:-1]) * 1000000)
+            else:
+                self.nombre_likes = int(nombre_likes)
+        
         if (nombre_reposts == ""):
             self.nombre_reposts = 0
         else:
-            self.nombre_reposts = int(nombre_reposts)
+            if (nombre_reposts[-1] == "K"):
+                self.nombre_reposts = int(float(nombre_reposts[:-1]) * 1000)
+            elif (nombre_reposts[-1] == "M"):
+                self.nombre_reposts = int(float(nombre_reposts[:-1]) * 1000000)
+            else:
+                self.nombre_reposts = int(nombre_reposts)
+        
         if (nombre_replies == ""):
             self.nombre_replies = 0
         else:
-            self.nombre_replies = int(nombre_replies)
+            if (nombre_replies[-1] == "K"):
+                self.nombre_replies = int(float(nombre_replies[:-1]) * 1000)
+            elif (nombre_replies[-1] == "M"):
+                self.nombre_replies = int(float(nombre_replies[:-1]) * 1000000)
+            else:
+                self.nombre_replies = int(nombre_replies)
+        
         if (nombre_views == ""):
             self.nombre_views = 0
         else:
-            self.nombre_views = int(nombre_views)
+            if (nombre_views[-1] == "K"):
+                self.nombre_views = int(float(nombre_views[:-1]) * 1000)
+            elif (nombre_views[-1] == "M"):
+                self.nombre_views = int(float(nombre_views[:-1]) * 1000000)
+            else:
+                self.nombre_views = int(nombre_views)
 
     def to_dict(self):
         return {
@@ -142,7 +165,7 @@ def get_tweets(request, mot_cle, until_date, since_date):
     time.sleep(20)
 
     # Définir le nombre maximum de défilements
-    max_scrolls = 2  # Par exemple, 100 scrolls
+    max_scrolls = 20 # Par exemple, 100 scrolls
     scroll_count = 0
     nombre_tweets = 0
     tweets = []
