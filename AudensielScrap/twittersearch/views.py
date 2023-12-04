@@ -142,7 +142,7 @@ def get_tweets(request, mot_cle, until_date, since_date):
     time.sleep(20)
 
     # Définir le nombre maximum de défilements
-    max_scrolls = 2  # Par exemple, 100 scrolls
+    max_scrolls = 2  # Par exemple, 50 scrolls
     scroll_count = 0
     nombre_tweets = 0
     tweets = []
