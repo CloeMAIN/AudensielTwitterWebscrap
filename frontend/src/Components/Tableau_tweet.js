@@ -1,5 +1,4 @@
-import React from 'react';
-
+import React, {useState} from 'react';
 const TWEETS = [
     {
         content: "Ceci est le contenu du premier tweet",
@@ -54,9 +53,27 @@ const TWEETS = [
 ];
 
 function TweetContent({tweets = TWEETS}){
+    const [start,setStart] = useState(0);
+    const [end,setEnd] = useState(5);
+
+    const handleNext = () => {
+        setStart(oldStart =>oldStart+5);
+        setEnd(oldEnd=>oldEnd+5);
+    }
+
+    const handlePrevious = () => {
+        setStart(oldStart => oldStart-5);
+        setEnd(oldEnd => oldEnd-5);
+    }
+
+
+
     return(
-        <div>
-            {tweets.slice(0, 5).map((tweet, index) => (
+        <div className="TableauTweet">
+            <button onClick = {handlePrevious}>Previous</button>
+            <button onClick = {handleNext}>Next</button>
+            <div>
+            {tweets.slice(start, end).map((tweet, index) => (
                 <div key={index}>
                     <p>{tweet.content}</p>
                     <p>Views: {tweet.views}</p>
@@ -64,6 +81,7 @@ function TweetContent({tweets = TWEETS}){
                     <p>Replies: {tweet.replies}</p>
                 </div>
             ))}
+            </div>
         </div>
     );
 }
