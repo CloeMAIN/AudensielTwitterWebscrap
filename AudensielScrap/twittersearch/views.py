@@ -117,23 +117,24 @@ def perform_scroll(bot):
 
 #Fonction pour enregistrer les tweets dans la base de données MongoDB
 def save_tweets(tweets):
+    element = tweets.to_dict()
     # Vérifier si un élément existe avec la valeur spécifique du champ identifiant
     # print('identifiant : ', tweets.identifiant)
     # print(tweet_collection.find_one({"text_tweet": tweets.text_tweet}))
-    if tweet_collection.find_one({"text_tweet": tweets.text_tweet}):
+    if tweet_collection.find_one({"identifiant": element["identifiant"]}):
         print("L'élément existe déjà")
         # Si l'élément existe, mettre à jour les valeurs des champs
-        tweet_collection.update_one({"text_tweet": tweets.text_tweet},
-                                     {"$set": {"nombre_likes" : tweets.nombre_likes,
-                                               "nombre_reposts" : tweets.nombre_reposts,
-                                               "nombre_replies" : tweets.nombre_replies,
-                                               "nombre_views" : tweets.nombre_views,
+        tweet_collection.update_one({"identifiant": element["identifiant"]},
+                                     {"$set": {"nombre_views" : element["nombre_views"],
+                                               "nombre_likes" : element["nombre_likes"],
+                                               "nombre_reposts" : element["nombre_reposts"],
+                                               "nombre_replies" : element["nombre_replies"],
                                                }
                                       }, upsert=False)
         
     else:
         print("L'élément n'existe pas")
-        tweet_collection.insert_one(tweets.to_dict())
+        tweet_collection.insert_one(element)
 
 
 # Fonction principale
