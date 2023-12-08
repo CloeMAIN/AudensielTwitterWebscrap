@@ -15,9 +15,10 @@ from .models import tweet_collection
 
 # Classe pour stocker les données collectées afin de pouvoir les enregistrer dans la base de données MongoDB
 class DonneeCollectee:
-    def __init__(self, text_tweet, nombre_likes, nombre_reposts, nombre_replies, nombre_views, date_tweet):
+    def __init__(self, text_tweet, nombre_likes, nombre_reposts, nombre_replies, nombre_views, date_tweet, identifiant_tweet):
         self.text_tweet = text_tweet
         self.date_tweet = date_tweet
+        self.identifiant = int(identifiant_tweet)
         if (nombre_likes == ""):
             self.nombre_likes = 0
         else:
@@ -67,7 +68,8 @@ class DonneeCollectee:
             "nombre_reposts": self.nombre_reposts,
             "nombre_replies": self.nombre_replies,
             "nombre_views": self.nombre_views,
-            "date_tweet": self.date_tweet
+            "date_tweet": self.date_tweet,
+            "identifiant": self.identifiant
         }
 
 # Fonction pour effectuer le login
@@ -115,17 +117,23 @@ def perform_scroll(bot):
 
 #Fonction pour enregistrer les tweets dans la base de données MongoDB
 def save_tweets(tweets):
-    dico_tweet = tweets.to_dict()
-    records= {
-        #id s'incrémentera automatiquement
-        "text_tweet" : dico_tweet['text_tweet'], 
-        "nombre_likes" : dico_tweet['nombre_likes'],
-        "nombre_reposts" : dico_tweet['nombre_reposts'],
-        "nombre_replies" : dico_tweet['nombre_replies'],
-        "nombre_views" : dico_tweet['nombre_views'],
-        "date_tweet" : dico_tweet['date_tweet'],
-    }
-    tweet_collection.insert_one({'tweet': records})
+    # Vérifier si un élément existe avec la valeur spécifique du champ identifiant
+    # print('identifiant : ', tweets.identifiant)
+    # print(tweet_collection.find_one({"text_tweet": tweets.text_tweet}))
+    if tweet_collection.find_one({"text_tweet": tweets.text_tweet}):
+        print("L'élément existe déjà")
+        # Si l'élément existe, mettre à jour les valeurs des champs
+        tweet_collection.update_one({"text_tweet": tweets.text_tweet},
+                                     {"$set": {"nombre_likes" : tweets.nombre_likes,
+                                               "nombre_reposts" : tweets.nombre_reposts,
+                                               "nombre_replies" : tweets.nombre_replies,
+                                               "nombre_views" : tweets.nombre_views,
+                                               }
+                                      }, upsert=False)
+        
+    else:
+        print("L'élément n'existe pas")
+        tweet_collection.insert_one(tweets.to_dict())
 
 
 # Fonction principale
@@ -179,7 +187,7 @@ def get_tweets(request, mot_cle, until_date, since_date):
     nombre_tweets = 0
     tweets = []
 
-    while scroll_count < max_scrolls:
+    while nombre_tweets < 1:
         
          # Randomly selecting a user agent
         useragent = random.choice(useragentarray)
@@ -217,15 +225,17 @@ def get_tweets(request, mot_cle, until_date, since_date):
 
             #On récupère la date du tweet
             user_info = tweet_element.find(attrs={'data-testid' : 'User-Name'})
+            user_info2 = user_info.find_all('a', href=True)
             user_info = user_info.find('time')
             date = user_info['datetime'][0:10]
-            
-
+            user_info2 = user_info2[2]['href']
+            identifiant = user_info2.split("/")[3]
+            # print(identifiant)
 
             if mot_cle in tweet_text:
-                save_tweets(DonneeCollectee(tweet_text, likes, reposts, replies, views, date))
+                save_tweets(DonneeCollectee(tweet_text, likes, reposts, replies, views, date, identifiant))
                 nombre_tweets += 1
-                #response_text += ("\n" + tweet_text)
+                response_text += ("\n" + str(identifiant))
 
         print(f"Scroll count: {scroll_count}")
         scroll_count += 1
@@ -240,6 +250,6 @@ def get_tweets(request, mot_cle, until_date, since_date):
 
     
     # Retourner le texte de réponse en tant qu'objet HttpResponse
-    return HttpResponse(str(date), content_type='text/plain')
+    return HttpResponse(response_text, content_type='text/plain')
 
 
