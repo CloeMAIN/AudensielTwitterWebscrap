@@ -136,16 +136,16 @@ def save_tweets(tweets):
         print("L'élément n'existe pas")
         tweet_collection.insert_one(element)
         
-def get_comment_tweet_details(bot, utilisateur, identifiant, search_url, scroll_position_before_click):
+def get_comment_tweet(bot, utilisateur, identifiant, search_url, scroll_position_before_click):
     tweet_url = f'https://twitter.com/{utilisateur}/status/{identifiant}'  
     bot.get(tweet_url)
 
-     # Attendre que la page se charge (ajustez le délai selon vos besoins)
+     # Attendre que la page se charge 
     time.sleep(5)
         
     # Extraire les commentaires de la page du tweet individuel
                
-    # ajouter à votre liste de commentaires
+    # ajouter à liste de commentaires
 
     # Revenir à la page de recherche au niveau du scroll où on était
     bot.get(search_url)
@@ -196,10 +196,10 @@ def get_tweets(request, mot_cle, until_date, since_date):
     bot.get(search_url)
 
     # Attendre que la page se charge
-    time.sleep(20)
+    time.sleep(10)
 
     # Définir le nombre maximum de défilements
-    max_scrolls = 20 # Par exemple, 100 scrolls
+    max_scrolls = 20 
     scroll_count = 0
     nombre_tweets = 0
     tweets = []
