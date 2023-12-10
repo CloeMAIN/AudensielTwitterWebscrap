@@ -112,7 +112,7 @@ def perform_scroll(bot):
     bot.execute_script(f"window.scrollTo({page_height/2}, {page_height});")
 
     # Attendre un court délai pour le chargement après le scroll
-    time.sleep(random.uniform(2, 5))
+    random_sleep()
 
 
 #Fonction pour enregistrer les tweets dans la base de données MongoDB
@@ -135,7 +135,23 @@ def save_tweets(tweets):
     else:
         print("L'élément n'existe pas")
         tweet_collection.insert_one(element)
+        
+def get_comment_tweet(bot, utilisateur, identifiant, search_url, scroll_position_before_click):
+    tweet_url = f'https://twitter.com/{utilisateur}/status/{identifiant}'  
+    bot.get(tweet_url)
 
+     # Attendre que la page se charge 
+    time.sleep(5)
+        
+    # Extraire les commentaires de la page du tweet individuel
+               
+    # ajouter à liste de commentaires
+
+    # Revenir à la page de recherche au niveau du scroll où on était
+    bot.get(search_url)
+    random_sleep()
+    bot.execute_script(f"window.scrollTo(0, {scroll_position_before_click});")
+    random_sleep()
 
 # Fonction principale
 def get_tweets(request, mot_cle, until_date, since_date):
@@ -144,8 +160,10 @@ def get_tweets(request, mot_cle, until_date, since_date):
     # tweet_collection.delete_many({})
 
     proxies = open("./twittersearch/proxies.txt").read().splitlines()
-    
+
     options = webdriver.ChromeOptions()
+    
+    #options.add_argument("--headless")  Pour lancer en arrière plan
     options.add_argument("--enable-javascript")
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
     
@@ -161,7 +179,7 @@ def get_tweets(request, mot_cle, until_date, since_date):
     # Création du navigateur Chrome
     bot = webdriver.Chrome(options=options)
 
-        # Initializing a list with two Useragents 
+    # Initializing a list with two Useragents 
     useragentarray = [ 
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36", 
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36", 
@@ -169,7 +187,6 @@ def get_tweets(request, mot_cle, until_date, since_date):
 
     bot.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})") 
     
-   
     
     # Effectuer le login
     login(bot)
@@ -179,11 +196,10 @@ def get_tweets(request, mot_cle, until_date, since_date):
     bot.get(search_url)
 
     # Attendre que la page se charge
-    time.sleep(20)
+    time.sleep(10)
 
     # Définir le nombre maximum de défilements
-    max_scrolls = 20 # Par exemple, 100 scrolls
-    max_scrolls = 1  # Par exemple, 50 scrolls
+    max_scrolls = 20 
     scroll_count = 0
     nombre_tweets = 0
     tweets = []
@@ -195,12 +211,16 @@ def get_tweets(request, mot_cle, until_date, since_date):
     
         bot.execute_cdp_cmd("Network.setUserAgentOverride", {"userAgent": useragent})
         
-        options.add_argument("--proxy-server=%s" % random.choice(proxies))
-        
+        # change proxy tous les 5 scrolls 
+        if scroll_count % 5 == 0:
+            options.add_argument("--proxy-server=%s" % proxies[scroll_count % 5])
         perform_scroll(bot)
 
         # Ajouter une pause aléatoire
         random_sleep()
+
+        if scroll_count % 10 == 0:
+            time.sleep(10)
 
         # Extraire le contenu de la page avec BeautifulSoup
         soup = BeautifulSoup(bot.page_source, 'html.parser')
@@ -226,15 +246,19 @@ def get_tweets(request, mot_cle, until_date, since_date):
 
             #On récupère la date du tweet
             user_info = tweet_element.find(attrs={'data-testid' : 'User-Name'})
-            user_info2 = user_info.find_all('a', href=True)
+            user_info2 = tweet_element.find_all('a', href=True)
             user_info = user_info.find('time')
-            date = user_info['datetime'][0:10]
-            user_info2 = user_info2[2]['href']
-            identifiant = user_info2.split("/")[3]
+            #date = user_info['datetime'][0:10] ne fonctionne pas 
+            #user_info2 = user_info2[3]['href']
+            url_segments = user_info2.split("/")
+            utilisateur = url_segments[1]
+            identifiant = url_segments[3]
             # print(identifiant)
 
             if mot_cle in tweet_text:
-                save_tweets(DonneeCollectee(tweet_text, likes, reposts, replies, views, date, identifiant))
+                scroll_position_before_click = bot.execute_script("return window.scrollY;")
+                get_comment_tweet_details(bot, utilisateur, identifiant, search_url, scroll_position_before_click)
+                #save_tweets(DonneeCollectee(tweet_text, likes, reposts, replies, views, date, identifiant))
                 nombre_tweets += 1
                 response_text += ("\n" + str(identifiant))
 
