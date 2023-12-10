@@ -204,7 +204,7 @@ def get_tweets(request, mot_cle, until_date, since_date):
     nombre_tweets = 0
     tweets = []
 
-    while nombre_tweets < 1:
+    while scroll_count< max_scrolls:
         
          # Randomly selecting a user agent
         useragent = random.choice(useragentarray)
@@ -246,19 +246,22 @@ def get_tweets(request, mot_cle, until_date, since_date):
 
             #On récupère la date du tweet
             user_info = tweet_element.find(attrs={'data-testid' : 'User-Name'})
-            user_info2 = tweet_element.find_all('a', href=True)
+            user_info2 = user_info.find_all('a', href=True)
             user_info = user_info.find('time')
-            #date = user_info['datetime'][0:10] ne fonctionne pas 
-            #user_info2 = user_info2[3]['href']
+            date = user_info['datetime'][0:10]
+
+            #On récupère l'identifiant du tweet
+            user_info2 = user_info2[2]['href']
             url_segments = user_info2.split("/")
-            utilisateur = url_segments[1]
             identifiant = url_segments[3]
+            utilisateur = url_segments[1]
+
             # print(identifiant)
 
             if mot_cle in tweet_text:
                 scroll_position_before_click = bot.execute_script("return window.scrollY;")
-                get_comment_tweet_details(bot, utilisateur, identifiant, search_url, scroll_position_before_click)
-                #save_tweets(DonneeCollectee(tweet_text, likes, reposts, replies, views, date, identifiant))
+                get_comment_tweet(bot, utilisateur, identifiant, search_url, scroll_position_before_click)
+                save_tweets(DonneeCollectee(tweet_text, likes, reposts, replies, views, date, identifiant))
                 nombre_tweets += 1
                 response_text += ("\n" + str(identifiant))
 
