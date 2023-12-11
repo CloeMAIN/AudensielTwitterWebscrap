@@ -15,8 +15,10 @@ from .models import tweet_collection
 
 # Classe pour stocker les données collectées afin de pouvoir les enregistrer dans la base de données MongoDB
 class DonneeCollectee:
-    def __init__(self, text_tweet, nombre_likes, nombre_reposts, nombre_replies, nombre_views):
+    def __init__(self, text_tweet, nombre_likes, nombre_reposts, nombre_replies, nombre_views, date_tweet, identifiant_tweet):
         self.text_tweet = text_tweet
+        self.date_tweet = date_tweet
+        self.identifiant = int(identifiant_tweet)
         if (nombre_likes == ""):
             self.nombre_likes = 0
         else:
@@ -57,13 +59,17 @@ class DonneeCollectee:
             else:
                 self.nombre_views = int(nombre_views)
 
+        
+
     def to_dict(self):
         return {
             "text_tweet": self.text_tweet,
             "nombre_likes": self.nombre_likes,
             "nombre_reposts": self.nombre_reposts,
             "nombre_replies": self.nombre_replies,
-            "nombre_views": self.nombre_views
+            "nombre_views": self.nombre_views,
+            "date_tweet": self.date_tweet,
+            "identifiant": self.identifiant
         }
 
 # Fonction pour effectuer le login
@@ -106,29 +112,58 @@ def perform_scroll(bot):
     bot.execute_script(f"window.scrollTo({page_height/2}, {page_height});")
 
     # Attendre un court délai pour le chargement après le scroll
-    time.sleep(random.uniform(2, 5))
+    random_sleep()
 
 
 #Fonction pour enregistrer les tweets dans la base de données MongoDB
 def save_tweets(tweets):
-    for tweet in tweets:
-        dico_tweet = tweet.to_dict()
-        records= {
-            #id s'incrémentera automatiquement
-            "text_tweet" : dico_tweet['text_tweet'], 
-            "nombre_likes" : dico_tweet['nombre_likes'],
-            "nombre_reposts" : dico_tweet['nombre_reposts'],
-            "nombre_replies" : dico_tweet['nombre_replies'],
-            "nombre_views" : dico_tweet['nombre_views']
-        }
-        tweet_collection.insert_one({'tweet': records})
-    
+    element = tweets.to_dict()
+    # Vérifier si un élément existe avec la valeur spécifique du champ identifiant
+    # print('identifiant : ', tweets.identifiant)
+    # print(tweet_collection.find_one({"text_tweet": tweets.text_tweet}))
+    if tweet_collection.find_one({"identifiant": element["identifiant"]}):
+        print("L'élément existe déjà")
+        # Si l'élément existe, mettre à jour les valeurs des champs
+        tweet_collection.update_one({"identifiant": element["identifiant"]},
+                                     {"$set": {"nombre_views" : element["nombre_views"],
+                                               "nombre_likes" : element["nombre_likes"],
+                                               "nombre_reposts" : element["nombre_reposts"],
+                                               "nombre_replies" : element["nombre_replies"],
+                                               }
+                                      }, upsert=False)
+        
+    else:
+        print("L'élément n'existe pas")
+        tweet_collection.insert_one(element)
+        
+def get_comment_tweet(bot, utilisateur, identifiant, search_url, scroll_position_before_click):
+    tweet_url = f'https://twitter.com/{utilisateur}/status/{identifiant}'  
+    bot.get(tweet_url)
+
+     # Attendre que la page se charge 
+    time.sleep(5)
+        
+    # Extraire les commentaires de la page du tweet individuel
+               
+    # ajouter à liste de commentaires
+
+    # Revenir à la page de recherche au niveau du scroll où on était
+    bot.get(search_url)
+    random_sleep()
+    bot.execute_script(f"window.scrollTo(0, {scroll_position_before_click});")
+    random_sleep()
 
 # Fonction principale
 def get_tweets(request, mot_cle, until_date, since_date):
+
+    # On vide la base de données avant de commencer la collecte
+    # tweet_collection.delete_many({})
+
     proxies = open("./twittersearch/proxies.txt").read().splitlines()
-    
+
     options = webdriver.ChromeOptions()
+    
+    #options.add_argument("--headless")  Pour lancer en arrière plan
     options.add_argument("--enable-javascript")
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
     
@@ -144,7 +179,7 @@ def get_tweets(request, mot_cle, until_date, since_date):
     # Création du navigateur Chrome
     bot = webdriver.Chrome(options=options)
 
-        # Initializing a list with two Useragents 
+    # Initializing a list with two Useragents 
     useragentarray = [ 
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36", 
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36", 
@@ -152,7 +187,6 @@ def get_tweets(request, mot_cle, until_date, since_date):
 
     bot.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})") 
     
-   
     
     # Effectuer le login
     login(bot)
@@ -162,31 +196,31 @@ def get_tweets(request, mot_cle, until_date, since_date):
     bot.get(search_url)
 
     # Attendre que la page se charge
-    time.sleep(20)
+    time.sleep(10)
 
     # Définir le nombre maximum de défilements
-<<<<<<< HEAD
-    max_scrolls = 20 # Par exemple, 100 scrolls
-=======
-    max_scrolls = 2  # Par exemple, 50 scrolls
->>>>>>> e145385be00dddc2545d9a639efb486efff3ece4
+    max_scrolls = 20 
     scroll_count = 0
     nombre_tweets = 0
     tweets = []
 
-    while scroll_count < max_scrolls:
+    while scroll_count< max_scrolls:
         
          # Randomly selecting a user agent
         useragent = random.choice(useragentarray)
     
         bot.execute_cdp_cmd("Network.setUserAgentOverride", {"userAgent": useragent})
         
-        options.add_argument("--proxy-server=%s" % random.choice(proxies))
-        
+        # change proxy tous les 5 scrolls 
+        if scroll_count % 5 == 0:
+            options.add_argument("--proxy-server=%s" % proxies[scroll_count % 5])
         perform_scroll(bot)
 
         # Ajouter une pause aléatoire
         random_sleep()
+
+        if scroll_count % 10 == 0:
+            time.sleep(10)
 
         # Extraire le contenu de la page avec BeautifulSoup
         soup = BeautifulSoup(bot.page_source, 'html.parser')
@@ -211,15 +245,25 @@ def get_tweets(request, mot_cle, until_date, since_date):
             views = details[3].get_text(strip=True)
 
             #On récupère la date du tweet
-            user_info = tweet_element.find(attrs={'data-testid' : 'User-Name'}).find('a').find('time')
-            # date = user_info['datetime']
-            print(user_info)
+            user_info = tweet_element.find(attrs={'data-testid' : 'User-Name'})
+            user_info2 = user_info.find_all('a', href=True)
+            user_info = user_info.find('time')
+            date = user_info['datetime'][0:10]
 
+            #On récupère l'identifiant du tweet
+            user_info2 = user_info2[2]['href']
+            url_segments = user_info2.split("/")
+            identifiant = url_segments[3]
+            utilisateur = url_segments[1]
+
+            # print(identifiant)
 
             if mot_cle in tweet_text:
-                tweets.append(DonneeCollectee(tweet_text, likes, reposts, replies, views))
+                scroll_position_before_click = bot.execute_script("return window.scrollY;")
+                get_comment_tweet(bot, utilisateur, identifiant, search_url, scroll_position_before_click)
+                save_tweets(DonneeCollectee(tweet_text, likes, reposts, replies, views, date, identifiant))
                 nombre_tweets += 1
-                response_text += ("\n" + tweet_text)
+                response_text += ("\n" + str(identifiant))
 
         print(f"Scroll count: {scroll_count}")
         scroll_count += 1
@@ -232,9 +276,7 @@ def get_tweets(request, mot_cle, until_date, since_date):
     with open('twitter.html', 'w', encoding='utf-8') as f:
         f.write(soup.prettify())
 
-    # Enregistrer les tweets dans la base de données MongoDB
-    save_tweets(tweets) # On donne la liste des structures de données contenant les tweets pour les enregistrer dans la base de données MongoDB
-
+    
     # Retourner le texte de réponse en tant qu'objet HttpResponse
     return HttpResponse(response_text, content_type='text/plain')
 
