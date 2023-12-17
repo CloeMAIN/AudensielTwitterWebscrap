@@ -1,4 +1,4 @@
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -12,10 +12,14 @@ import re
 from django.shortcuts import render
 from .models import tweet_collection
 
+#add library for creating unique id
+from datetime import datetime
+from django.http import JsonResponse
+
 
 # Classe pour stocker les données collectées afin de pouvoir les enregistrer dans la base de données MongoDB
 class DonneeCollectee:
-    def __init__(self, text_tweet, nombre_likes, nombre_reposts, nombre_replies, nombre_views, date_tweet, identifiant_tweet):
+    def __init__(self, text_tweet, nombre_likes, nombre_reposts, nombre_replies, nombre_views, date_tweet, identifiant_tweet, req_id):
         self.text_tweet = text_tweet
         self.date_tweet = date_tweet
         self.identifiant = int(identifiant_tweet)
@@ -69,7 +73,8 @@ class DonneeCollectee:
             "nombre_replies": self.nombre_replies,
             "nombre_views": self.nombre_views,
             "date_tweet": self.date_tweet,
-            "identifiant": self.identifiant
+            "identifiant": self.identifiant,
+            "req_id": self.req_id
         }
 
 # Fonction pour effectuer le login
@@ -154,8 +159,15 @@ def get_comment_tweet(bot, utilisateur, identifiant, search_url, scroll_position
     random_sleep()
 
 # Fonction principale
-def get_tweets(request, mot_cle, until_date, since_date):
 
+"""
+ATTENTION
+Voir si c'est possible de changer la fonction get_tweets en asynchrone
+Frontend ne reçoit de réponse que quand la fonction a fini d'éxecuter
+"""
+def get_tweets(request, mot_cle, until_date, since_date):
+    #Génère un id unique par rapport à la requête faite
+    req_id = datetime.now().strftime("%Y%m%d%H%M")
     # On vide la base de données avant de commencer la collecte
     # tweet_collection.delete_many({})
 
@@ -261,7 +273,7 @@ def get_tweets(request, mot_cle, until_date, since_date):
             if mot_cle in tweet_text:
                 scroll_position_before_click = bot.execute_script("return window.scrollY;")
                 get_comment_tweet(bot, utilisateur, identifiant, search_url, scroll_position_before_click)
-                save_tweets(DonneeCollectee(tweet_text, likes, reposts, replies, views, date, identifiant))
+                save_tweets(DonneeCollectee(tweet_text, likes, reposts, replies, views, date, identifiant,req_id))
                 nombre_tweets += 1
                 response_text += ("\n" + str(identifiant))
 
@@ -280,4 +292,17 @@ def get_tweets(request, mot_cle, until_date, since_date):
     # Retourner le texte de réponse en tant qu'objet HttpResponse
     return HttpResponse(response_text, content_type='text/plain')
 
+
+
+def get_dbreq_tweet(request, req_id):
+    # Récupère les tweets avec le req_id correspondant de la base de données
+    # Va récupérer tout les tweets dans l'ordre trouvé dans la base donc ne changeant pas
+    # la visualisation frontend
+    tweets = DonneeCollectee.objects.filter(req_id=req_id)
+
+    # Convertir les tweets en un format qui peut être renvoyé en réponse
+    tweets_data = [tweet.to_dict() for tweet in tweets]
+
+    # Renvoyer les données des tweets en tant que réponse JSON
+    return JsonResponse(tweets_data, safe=False)
 
