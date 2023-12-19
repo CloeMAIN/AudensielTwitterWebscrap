@@ -1,9 +1,10 @@
+import React, { useState } from 'react';
 import axios from 'axios';
 
-function SearchKeyWord({keyword,setKeyord}){
+function SearchKeyWord({keyword,setKeyword}){
     return(
         <form>
-            <input type="mot" placeholder="Mot Clés"/>
+            <input type="text" placeholder="Mot Clés" value={keyword} onChange={(e) => setKeyword(e.target.value)}/>
         </form>
     );
 }
@@ -11,7 +12,7 @@ function SearchKeyWord({keyword,setKeyord}){
 function SearchBeginDate({beginDate,setBeginDate}){
     return(
         <form>
-            <input type="date" placejolder="Début"/>
+            <input type="date" placeholder="Début" value={beginDate} onChange={(e) => setBeginDate(e.target.value)}/>
         </form>
     );
 }
@@ -20,7 +21,7 @@ function SearchBeginDate({beginDate,setBeginDate}){
 function SearchEndDate({endDate,setEndDate}){
     return(
         <form>
-            <input type="date" placejolder="Fin"/>
+            <input type="date" placeholder="Fin" value={endDate} onChange={(e) => setEndDate(e.target.value)}/>
         </form>
     );
 }
@@ -39,8 +40,16 @@ function SearchBar(){
     const [keyword, setKeyword] = useState('');
     const [beginDate, setBeginDate] = useState('');
     const [endDate, setEndDate] = useState('');
-    const now = new Date();
-    const req_id = now.toISOString().slice(0,12);
+    const [tweets, setTweets] = useState([]);
+    const [start,setStart] = useState(0);
+    const [end,setEnd] = useState(5);
+
+
+
+
+    let now = new Date();
+    //Pour avoir l'id de la requête dans le même format que dans le backend
+    let req_id = now.toISOString().slice(0,12);
 
     
     //Fonctions de soumission (va faire requete get_tweets par le biais url)
@@ -49,7 +58,7 @@ function SearchBar(){
         now = new Date();
         // Effectuer la requête get_tweets avec keyword, beginDate et endDate
         try{
-            const response = await axios.get(`search/${keyword}/${beginDate}/${endDate}`);
+            const response = await axios.get(`http://localhost:8000/search/${keyword}/3A${beginDate}/3A${endDate}/`);
             console.log(response);
             // On pourrait ajouter un élement montrant que la requête a été effectuée
             // et un autre pour montrer que la requête est toujours en cours
@@ -65,7 +74,8 @@ function SearchBar(){
         event.preventDefault();
         req_id = now.toISOString().slice(0,12);
         try{
-            const response = await axios.get(`search_new/${req_id}`);
+            const response = await axios.get(`http://localhost:8000/search_new/${req_id}`);
+            setTweets(response.data);
         }
         catch (error){
             console.error(error);
@@ -73,18 +83,48 @@ function SearchBar(){
     }
 
 
+    const handleNext = () => {
+        setStart(oldStart =>oldStart+5);
+        setEnd(oldEnd=>oldEnd+5);
+    }
+
+    const handlePrevious = () => {
+        setStart(oldStart => oldStart-5);
+        setEnd(oldEnd => oldEnd-5);
+    }
+
+
     //Affichage 
     return(
-    <form onSubmit={handleSubmit}>
-        <SearchKeyWord keyword={keyword} setKeyword={setKeyword}/>
-        <SearchBeginDate beginDate={beginDate} setBeginDate={setBeginDate}/>
-        <SearchEndDate endDate={endDate} setEndDate={setEndDate}/> 
-        <SubmitButton handleSubmit={handleSubmit}/> 
-        {/*On doit add la fonction handleUpdate si handleSubmit pressed
-        Soit on utilise un useState de submitPressed,setSubmitPressed
-        pour déterminer quand arrêter de faire la boucle de handleUpdate*/}
+        <div className="FormsAndTweet">
 
-    </form>
+            <form onSubmit={handleSubmit}>
+                <SearchKeyWord keyword={keyword} setKeyword={setKeyword}/>
+                <SearchBeginDate beginDate={beginDate} setBeginDate={setBeginDate}/>
+                <SearchEndDate endDate={endDate} setEndDate={setEndDate}/> 
+                <SubmitButton handleSubmit={handleSubmit}/> 
+                {/*On doit add la fonction handleUpdate si handleSubmit pressed
+                Soit on utilise un useState de submitPressed,setSubmitPressed
+                pour déterminer quand arrêter de faire la boucle de handleUpdate*/}
+            </form>
+
+            <div className = "TweetTable">
+                <button onClick = {handlePrevious}>Previous</button>
+                <button onClick = {handleNext}>Next</button>
+                <button onClick={handleUpdate}>Update</button>
+
+                <div className = "TableElement">
+                    {tweets.slice(start, end).map((tweet, index) => (
+                        <div key={index}>
+                            <p>{tweet.content}</p>
+                            <p>Views: {tweet.views}</p>
+                            <p>Likes: {tweet.likes}</p>
+                            <p>Replies: {tweet.replies}</p>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
     );
 }
 
