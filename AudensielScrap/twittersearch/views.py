@@ -19,45 +19,38 @@ class DonneeCollectee:
         self.text_tweet = text_tweet
         self.date_tweet = date_tweet
         self.identifiant = int(identifiant_tweet)
-        if (nombre_likes == ""):
+        if nombre_likes == "":
             self.nombre_likes = 0
         else:
-            if (nombre_likes[-1] == "K"):
-                self.nombre_likes = int(float(nombre_likes[:-1]) * 1000)
-            elif (nombre_likes[-1] == "M"):
-                self.nombre_likes = int(float(nombre_likes[:-1]) * 1000000)
-            else:
-                self.nombre_likes = int(nombre_likes)
+            self.nombre_likes = self.convert_number(nombre_likes)
 
-        if (nombre_reposts == ""):
+        if nombre_reposts == "":
             self.nombre_reposts = 0
         else:
-            if (nombre_reposts[-1] == "K"):
-                self.nombre_reposts = int(float(nombre_reposts[:-1]) * 1000)
-            elif (nombre_reposts[-1] == "M"):
-                self.nombre_reposts = int(float(nombre_reposts[:-1]) * 1000000)
-            else:
-                self.nombre_reposts = int(nombre_reposts)
+            self.nombre_reposts = self.convert_number(nombre_reposts)
 
-        if (nombre_replies == ""):
+        if nombre_replies == "":
             self.nombre_replies = 0
         else:
-            if (nombre_replies[-1] == "K"):
-                self.nombre_replies = int(float(nombre_replies[:-1]) * 1000)
-            elif (nombre_replies[-1] == "M"):
-                self.nombre_replies = int(float(nombre_replies[:-1]) * 1000000)
-            else:
-                self.nombre_replies = int(nombre_replies)
+            self.nombre_replies = self.convert_number(nombre_replies)
 
-        if (nombre_views == ""):
+        if nombre_views == "":
             self.nombre_views = 0
         else:
-            if (nombre_views[-1] == "K"):
-                self.nombre_views = int(float(nombre_views[:-1]) * 1000)
-            elif (nombre_views[-1] == "M"):
-                self.nombre_views = int(float(nombre_views[:-1]) * 1000000)
-            else:
-                self.nombre_views = int(nombre_views)
+            self.nombre_views = self.convert_number(nombre_views)
+
+        self.comment_tweet = []
+
+    def convert_number(self, value):
+        if value[-1] == "K":
+            return int(float(value[:-1]) * 1000)
+        elif value[-1] == "M":
+            return int(float(value[:-1]) * 1000000)
+        else:
+            return int(value)
+
+    def add_comment(self, comment):
+        self.comment_tweet.append(comment)
 
     def to_dict(self):
         return {
@@ -67,8 +60,75 @@ class DonneeCollectee:
             "nombre_replies": self.nombre_replies,
             "nombre_views": self.nombre_views,
             "date_tweet": self.date_tweet,
-            "identifiant": self.identifiant
+            "identifiant": self.identifiant,
+            "comment_tweet": self.comment_tweet
         }
+
+def login(bot):
+    bot.get('https://twitter.com/i/flow/login')
+
+    username_input = WebDriverWait(bot, 10).until(
+        EC.presence_of_element_located((By.CLASS_NAME, 'r-1yadl64'))
+    )
+    username_input.send_keys('@UserNumber59901')
+
+    button = bot.find_element(By.CSS_SELECTOR, 'div.css-175oi2r.r-1ny4l3l.r-6koalj.r-16y2uox div.css-175oi2r.r-16y2uox.r-1jgb5lz.r-13qz1uu div:nth-child(6)')
+    button.click()
+
+    password_input = WebDriverWait(bot, 10).until(
+        EC.presence_of_element_located((By.CSS_SELECTOR, 'div.css-175oi2r input[type="password"]')))
+    password_input.send_keys('aMkiuzi77/P')
+    password_input.send_keys(Keys.RETURN)
+
+    time.sleep(random.uniform(2, 5))
+
+def random_sleep():
+    time.sleep(random.uniform(2, 5))
+
+def perform_scroll(bot):
+    page_height = bot.execute_script("return document.body.scrollHeight")
+    bot.execute_script(f"window.scrollTo(0, {page_height/2});")
+    random_sleep()
+    bot.execute_script(f"window.scrollTo({page_height/2}, {page_height});")
+    random_sleep()
+
+def get_comment_tweet(bot, utilisateur, identifiant, search_url):
+    tweet_url = f'https://twitter.com/{utilisateur}/status/{identifiant}'
+    bot.get(tweet_url)
+
+    time.sleep(5)
+
+    comment_elements = bot.find_elements(By.XPATH, '//div[@data-testid="tweet"]//div[@data-testid="reply"]')[:10]
+
+    comments_text = []
+    for comment_element in comment_elements:
+        comment_text = comment_element.text
+        comments_text.append(comment_text)
+
+    tweet_data = DonneeCollectee("", "", "", "", "", "", "")
+    for comment_text in comments_text:
+        tweet_data.add_comment(comment_text)
+
+    bot.get(search_url)
+    random_sleep()
+
+def save_tweets(tweets):
+    element = tweets.to_dict()
+
+    if tweet_collection.find_one({"identifiant": element["identifiant"]}):
+        print("L'élément existe déjà")
+        tweet_collection.update_one({"identifiant": element["identifiant"]},
+                                     {"$set": {"nombre_views": element["nombre_views"],
+                                               "nombre_likes": element["nombre_likes"],
+                                               "nombre_reposts": element["nombre_reposts"],
+                                               "nombre_replies": element["nombre_replies"],
+                                               "comment_tweet": element["comment_tweet"]
+                                               }
+                                      }, upsert=False)
+
+    else:
+        print("L'élément n'existe pas")
+        tweet_collection.insert_one(element)
 
 def login(bot):
     bot.get('https://twitter.com/i/flow/login')
@@ -123,16 +183,38 @@ def get_comment_tweet(bot, utilisateur, identifiant, search_url):
 
     scroll_position_before_click = bot.execute_script("return window.scrollY;")
 
-    # Extract comments from the individual tweet page
-    # Your code for extracting comments goes here
+    # Extract comments from the individual tweet page here
+    comments = extract_comments(bot, 10)
+    print(f"Comments for tweet {identifiant}: {comments}")
 
     bot.get(search_url)
     random_sleep()
     bot.execute_script(f"window.scrollTo(0, {scroll_position_before_click});")
     random_sleep()
 
-def get_tweets(request, mot_cle, until_date, since_date):
-    global processed_tweets  # Use the global set
+def extract_comments(bot, num_comments):
+    comments = []
+
+    # Scroll to load additional comments if necessary
+    for _ in range(num_comments // 5):  # Assuming 5 comments load with each scroll
+        perform_scroll(bot)
+        random_sleep()
+
+    # Find and extract comments
+    comment_elements = bot.find_elements(By.CSS_SELECTOR, '[data-testid="tweet"] [data-testid="tweetText"] span')
+    for comment_element in comment_elements[:num_comments]:
+        comment_text = comment_element.text.strip()
+        comments.append(comment_text)
+
+    return comments
+
+
+
+
+
+
+def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
+    global processed_tweets  # Utiliser l'ensemble global
     proxies = open("./twittersearch/proxies.txt").read().splitlines()
 
     options = webdriver.ChromeOptions()
@@ -163,7 +245,7 @@ def get_tweets(request, mot_cle, until_date, since_date):
     scroll_count = 0
     nombre_tweets = 0
 
-    while scroll_count < max_scrolls:
+    while nombre_tweets <= nb_tweets :
         useragent = random.choice(useragentarray)
         bot.execute_cdp_cmd("Network.setUserAgentOverride", {"userAgent": useragent})
 
@@ -192,7 +274,9 @@ def get_tweets(request, mot_cle, until_date, since_date):
             replies = details[0].get_text(strip=True)
             reposts = details[1].get_text(strip=True)
             likes = details[2].get_text(strip=True)
-            views = details[3].get_text(strip=True)
+
+            # Make sure there are at least 4 items in details before trying to access index 3
+            views = details[3].get_text(strip=True) if len(details) >= 4 else ""
 
             user_info = tweet_element.find(attrs={'data-testid': 'User-Name'})
             user_info2 = user_info.find_all('a', href=True)
@@ -204,14 +288,14 @@ def get_tweets(request, mot_cle, until_date, since_date):
             identifiant = url_segments[3]
             utilisateur = url_segments[1]
 
-            if mot_cle in tweet_text and identifiant not in processed_tweets:
+            if mot_cle in tweet_text and identifiant not in processed_tweets and nombre_tweets <= nb_tweets:
                 scroll_position_before_click = bot.execute_script("return window.scrollY;")
                 get_comment_tweet(bot, utilisateur, identifiant, search_url)
                 save_tweets(DonneeCollectee(tweet_text, likes, reposts, replies, views, date, identifiant))
                 nombre_tweets += 1
                 response_text += ("\n" + str(identifiant))
 
-                processed_tweets.add(identifiant)  # Add the processed tweet identifier to the set
+                processed_tweets.add(identifiant)  # Ajouter l'identifiant du tweet traité à l'ensemble
 
         print(f"Scroll count: {scroll_count}")
         scroll_count += 1
@@ -224,4 +308,5 @@ def get_tweets(request, mot_cle, until_date, since_date):
         f.write(soup.prettify())
 
     return HttpResponse(response_text, content_type='text/plain')
+
 
