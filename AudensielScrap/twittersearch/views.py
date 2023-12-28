@@ -15,7 +15,8 @@ from .models import tweet_collection
 processed_tweets = set()
 
 class DonneeCollectee:
-    def __init__(self, text_tweet, nombre_likes, nombre_reposts, nombre_replies, nombre_views, date_tweet, identifiant_tweet):
+    
+    def __init__(self, text_tweet, nombre_likes, nombre_reposts, nombre_replies, nombre_views, date_tweet, identifiant_tweet, comment_tweet=None):
         self.text_tweet = text_tweet
         self.date_tweet = date_tweet
         self.identifiant = int(identifiant_tweet)
@@ -39,7 +40,7 @@ class DonneeCollectee:
         else:
             self.nombre_views = self.convert_number(nombre_views)
 
-        self.comment_tweet = []
+        self.comment_tweet = comment_tweet if comment_tweet is not None else []
 
     def convert_number(self, value):
         if value[-1] == "K":
@@ -49,8 +50,8 @@ class DonneeCollectee:
         else:
             return int(value)
 
-    def add_comment(self, comment):
-        self.comment_tweet.append(comment)
+    def add_comment(self,comment):
+        self.comment_tweet.append(comment)  
 
     def to_dict(self):
         return {
@@ -82,17 +83,10 @@ def login(bot):
 
     time.sleep(random.uniform(2, 5))
 
-def random_sleep():
-    time.sleep(random.uniform(2, 5))
 
-def perform_scroll(bot):
-    page_height = bot.execute_script("return document.body.scrollHeight")
-    bot.execute_script(f"window.scrollTo(0, {page_height/2});")
-    random_sleep()
-    bot.execute_script(f"window.scrollTo({page_height/2}, {page_height});")
-    random_sleep()
 
-def get_comment_tweet(bot, utilisateur, identifiant, search_url):
+
+""" def get_comment_tweet(bot, utilisateur, identifiant, search_url):
     tweet_url = f'https://twitter.com/{utilisateur}/status/{identifiant}'
     bot.get(tweet_url)
 
@@ -111,7 +105,7 @@ def get_comment_tweet(bot, utilisateur, identifiant, search_url):
 
     bot.get(search_url)
     random_sleep()
-
+ """
 def save_tweets(tweets):
     element = tweets.to_dict()
 
@@ -130,23 +124,6 @@ def save_tweets(tweets):
         print("L'élément n'existe pas")
         tweet_collection.insert_one(element)
 
-def login(bot):
-    bot.get('https://twitter.com/i/flow/login')
-
-    username_input = WebDriverWait(bot, 10).until(
-        EC.presence_of_element_located((By.CLASS_NAME, 'r-1yadl64'))
-    )
-    username_input.send_keys('@UserNumber59901')
-
-    button = bot.find_element(By.CSS_SELECTOR, 'div.css-175oi2r.r-1ny4l3l.r-6koalj.r-16y2uox div.css-175oi2r.r-16y2uox.r-1jgb5lz.r-13qz1uu div:nth-child(6)')
-    button.click()
-
-    password_input = WebDriverWait(bot, 10).until(
-        EC.presence_of_element_located((By.CSS_SELECTOR, 'div.css-175oi2r input[type="password"]')))
-    password_input.send_keys('aMkiuzi77/P')
-    password_input.send_keys(Keys.RETURN)
-
-    time.sleep(random.uniform(2, 5))
 
 def random_sleep():
     time.sleep(random.uniform(2, 5))
@@ -158,22 +135,7 @@ def perform_scroll(bot):
     bot.execute_script(f"window.scrollTo({page_height/2}, {page_height});")
     random_sleep()
 
-def save_tweets(tweets):
-    element = tweets.to_dict()
 
-    if tweet_collection.find_one({"identifiant": element["identifiant"]}):
-        print("L'élément existe déjà")
-        tweet_collection.update_one({"identifiant": element["identifiant"]},
-                                     {"$set": {"nombre_views": element["nombre_views"],
-                                               "nombre_likes": element["nombre_likes"],
-                                               "nombre_reposts": element["nombre_reposts"],
-                                               "nombre_replies": element["nombre_replies"],
-                                               }
-                                      }, upsert=False)
-
-    else:
-        print("L'élément n'existe pas")
-        tweet_collection.insert_one(element)
 
 def get_comment_tweet(bot, utilisateur, identifiant, search_url):
     tweet_url = f'https://twitter.com/{utilisateur}/status/{identifiant}'
@@ -182,7 +144,8 @@ def get_comment_tweet(bot, utilisateur, identifiant, search_url):
     time.sleep(5)
 
     scroll_position_before_click = bot.execute_script("return window.scrollY;")
-
+    # Wait for the comments section to load
+    WebDriverWait(bot, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, '[data-testid="tweet"] [data-testid="tweetText"]')))
     # Extract comments from the individual tweet page here
     comments = extract_comments(bot, 10)
     print(f"Comments for tweet {identifiant}: {comments}")
@@ -191,26 +154,29 @@ def get_comment_tweet(bot, utilisateur, identifiant, search_url):
     random_sleep()
     bot.execute_script(f"window.scrollTo(0, {scroll_position_before_click});")
     random_sleep()
+    return comments
 
 def extract_comments(bot, num_comments):
     comments = []
 
     # Scroll to load additional comments if necessary
     for _ in range(num_comments // 5):  # Assuming 5 comments load with each scroll
-        perform_scroll(bot)
+        # faire un scroll
+        page_height = bot.execute_script("return document.body.scrollHeight")
+        bot.execute_script(f"window.scrollTo(0, {page_height/2});")
+        soup = BeautifulSoup(bot.page_source, 'html.parser')
+        commententaires = soup.find_all(attrs={'data-testid': 'tweet'})
+        response_text = ""
+        for comment in commententaires:
+                comment_text =comment.find(attrs={'data-testid': 'tweetText'})
+                if comment_text  is not None:
+                    comment_text =comment_text.get_text(strip=True)
+                    comments.append(comment_text)
+                else:
+                    continue
         random_sleep()
 
-    # Find and extract comments
-    comment_elements = bot.find_elements(By.CSS_SELECTOR, '[data-testid="tweet"] [data-testid="tweetText"] span')
-    for comment_element in comment_elements[:num_comments]:
-        comment_text = comment_element.text.strip()
-        comments.append(comment_text)
-
     return comments
-
-
-
-
 
 
 def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
@@ -246,18 +212,7 @@ def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
     nombre_tweets = 0
 
     while nombre_tweets <= nb_tweets :
-        useragent = random.choice(useragentarray)
-        bot.execute_cdp_cmd("Network.setUserAgentOverride", {"userAgent": useragent})
-
-        if scroll_count % 5 == 0:
-            options.add_argument("--proxy-server=%s" % proxies[scroll_count % 5])
-        perform_scroll(bot)
-
-        random_sleep()
-
-        if scroll_count % 10 == 0:
-            time.sleep(10)
-
+        
         soup = BeautifulSoup(bot.page_source, 'html.parser')
         tweet_elements = soup.find_all(attrs={'data-testid': 'tweet'})
 
@@ -288,15 +243,30 @@ def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
             identifiant = url_segments[3]
             utilisateur = url_segments[1]
 
-            if mot_cle in tweet_text and identifiant not in processed_tweets and nombre_tweets <= nb_tweets:
+            if mot_cle in tweet_text and nombre_tweets <= nb_tweets:
                 scroll_position_before_click = bot.execute_script("return window.scrollY;")
-                get_comment_tweet(bot, utilisateur, identifiant, search_url)
-                save_tweets(DonneeCollectee(tweet_text, likes, reposts, replies, views, date, identifiant))
+                comments = get_comment_tweet(bot, utilisateur, identifiant, search_url)
+                tweets_instance = DonneeCollectee(tweet_text, likes, reposts, replies, views, date, identifiant, comments)
+                # Save the tweet with comments to the database
+                save_tweets(tweets_instance)
+
                 nombre_tweets += 1
                 response_text += ("\n" + str(identifiant))
 
                 processed_tweets.add(identifiant)  # Ajouter l'identifiant du tweet traité à l'ensemble
+                
+        useragent = random.choice(useragentarray)
+        bot.execute_cdp_cmd("Network.setUserAgentOverride", {"userAgent": useragent})
 
+        if scroll_count % 5 == 0:
+            options.add_argument("--proxy-server=%s" % proxies[scroll_count % 5])
+        perform_scroll(bot)
+
+        random_sleep()
+
+        if scroll_count % 10 == 0:
+            time.sleep(10)
+            
         print(f"Scroll count: {scroll_count}")
         scroll_count += 1
 
