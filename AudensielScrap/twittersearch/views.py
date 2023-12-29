@@ -137,7 +137,7 @@ def perform_scroll(bot):
 
 
 
-def get_comment_tweet(bot, utilisateur, identifiant, search_url):
+def get_comment_tweet(bot, utilisateur, identifiant, search_url, tweet_text):
     tweet_url = f'https://twitter.com/{utilisateur}/status/{identifiant}'
     bot.get(tweet_url)
 
@@ -147,7 +147,7 @@ def get_comment_tweet(bot, utilisateur, identifiant, search_url):
     # Wait for the comments section to load
     WebDriverWait(bot, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, '[data-testid="tweet"] [data-testid="tweetText"]')))
     # Extract comments from the individual tweet page here
-    comments = extract_comments(bot, 10)
+    comments = extract_comments(bot, 10, tweet_text)
     print(f"Comments for tweet {identifiant}: {comments}")
 
     bot.get(search_url)
@@ -156,8 +156,8 @@ def get_comment_tweet(bot, utilisateur, identifiant, search_url):
     random_sleep()
     return comments
 
-def extract_comments(bot, num_comments):
-    comments = []
+def extract_comments(bot, num_comments, tweet_text):
+    comments = set()  # Using a set to avoid duplicates
 
     # Scroll to load additional comments if necessary
     for _ in range(num_comments // 5):  # Assuming 5 comments load with each scroll
@@ -166,17 +166,18 @@ def extract_comments(bot, num_comments):
         bot.execute_script(f"window.scrollTo(0, {page_height/2});")
         soup = BeautifulSoup(bot.page_source, 'html.parser')
         commententaires = soup.find_all(attrs={'data-testid': 'tweet'})
-        response_text = ""
+        
         for comment in commententaires:
-                comment_text =comment.find(attrs={'data-testid': 'tweetText'})
-                if comment_text  is not None:
-                    comment_text =comment_text.get_text(strip=True)
-                    comments.append(comment_text)
-                else:
-                    continue
+            comment_text = comment.find(attrs={'data-testid': 'tweetText'})
+            if comment_text is not None and comment_text.get_text(strip=True) != tweet_text:
+                comment_text = comment_text.get_text(strip=True)
+                comments.add(comment_text)  # Use add() to add unique comments to the set
+            else:
+                continue
         random_sleep()
 
-    return comments
+    return list(comments)  # Convert set back to a list
+
 
 
 def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
@@ -221,7 +222,7 @@ def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
         for tweet_element in tweet_elements:
             tweet_div_text = tweet_element.find(attrs={'data-testid': 'tweetText'})
             if tweet_div_text is not None:
-                tweet_text = tweet_div_text.get_text(strip=True)
+                tweet_text = tweet_div_text.get_text(strip= False)
             else:
                 continue
 
@@ -245,7 +246,7 @@ def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
 
             if mot_cle in tweet_text and nombre_tweets <= nb_tweets:
                 scroll_position_before_click = bot.execute_script("return window.scrollY;")
-                comments = get_comment_tweet(bot, utilisateur, identifiant, search_url)
+                comments = get_comment_tweet(bot, utilisateur, identifiant, search_url, tweet_text)
                 tweets_instance = DonneeCollectee(tweet_text, likes, reposts, replies, views, date, identifiant, comments)
                 # Save the tweet with comments to the database
                 save_tweets(tweets_instance)
