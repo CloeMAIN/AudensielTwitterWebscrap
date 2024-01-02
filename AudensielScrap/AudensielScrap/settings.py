@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 
 from pathlib import Path
 import os
+from mongoengine import connect
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -79,15 +80,23 @@ WSGI_APPLICATION = 'AudensielScrap.wsgi.application'
 #     'default': {
 #         'ENGINE': 'djongo',
 #         'NAME': 'Tweets',
-#         # 'CLIENT': {
-#         #     'host': 'cluster0.qnvy73r.mongodb.net',
-#         #     'name': 'Tweets_recoltés',
-#         #     'username': 'cloe',
-#         #     'password': 'Webscrap23',
-#         #     'authMechanism': 'SCRAM-SHA-1',
-#         # },
+#         'CLIENT': {
+#             'host': 'mongodb+srv://cloe:Webscrap23@cluster0.qnvy73r.mongodb.net/?authMechanism=SCRAM-SHA-1',
+#             'name': 'TestFrontEnd',
+#             'username': 'cloe',
+#             'password': 'Webscrap23',
+#             'authMechanism': 'SCRAM-SHA-1',
+#         },
 #     },
 # }
+connect(
+    db='Tweets',
+    username='cloe',
+    password='Webscrap23',
+    host='mongodb+srv://cloe:Webscrap23@cluster0.qnvy73r.mongodb.net/TestFrontEnd?authMechanism=SCRAM-SHA-1',
+    authentication_source='admin',
+    authentication_mechanism='SCRAM-SHA-1'
+)
 
 
 # Password validation

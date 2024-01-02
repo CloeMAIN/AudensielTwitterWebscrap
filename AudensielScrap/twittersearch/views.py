@@ -10,72 +10,28 @@ import time
 import random
 import re
 from django.shortcuts import render
-from .models import tweet_collection
-
+#from .models import tweet_collection
+from .models import DonneeCollectee
 #add library for creating unique id
 from datetime import datetime
 from django.http import JsonResponse
 
 
 # Classe pour stocker les données collectées afin de pouvoir les enregistrer dans la base de données MongoDB
-class DonneeCollectee:
-    def __init__(self, text_tweet, nombre_likes, nombre_reposts, nombre_replies, nombre_views, date_tweet, identifiant_tweet, req_id):
-        self.text_tweet = text_tweet
-        self.date_tweet = date_tweet
-        self.identifiant = int(identifiant_tweet)
-        if (nombre_likes == ""):
-            self.nombre_likes = 0
-        else:
-            if (nombre_likes[-1] == "K"): # Si le nombre de likes est exprimé en milliers
-                self.nombre_likes = int(float(nombre_likes[:-1]) * 1000)
-            elif (nombre_likes[-1] == "M"): # Si le nombre de likes est exprimé en millions
-                self.nombre_likes = int(float(nombre_likes[:-1]) * 1000000)
-            else:
-                self.nombre_likes = int(nombre_likes)
-        
-        if (nombre_reposts == ""):
-            self.nombre_reposts = 0
-        else:
-            if (nombre_reposts[-1] == "K"):
-                self.nombre_reposts = int(float(nombre_reposts[:-1]) * 1000)
-            elif (nombre_reposts[-1] == "M"):
-                self.nombre_reposts = int(float(nombre_reposts[:-1]) * 1000000)
-            else:
-                self.nombre_reposts = int(nombre_reposts)
-        
-        if (nombre_replies == ""):
-            self.nombre_replies = 0
-        else:
-            if (nombre_replies[-1] == "K"):
-                self.nombre_replies = int(float(nombre_replies[:-1]) * 1000)
-            elif (nombre_replies[-1] == "M"):
-                self.nombre_replies = int(float(nombre_replies[:-1]) * 1000000)
-            else:
-                self.nombre_replies = int(nombre_replies)
-        
-        if (nombre_views == ""):
-            self.nombre_views = 0
-        else:
-            if (nombre_views[-1] == "K"):
-                self.nombre_views = int(float(nombre_views[:-1]) * 1000)
-            elif (nombre_views[-1] == "M"):
-                self.nombre_views = int(float(nombre_views[:-1]) * 1000000)
-            else:
-                self.nombre_views = int(nombre_views)
 
-        
 
-    def to_dict(self):
-        return {
-            "text_tweet": self.text_tweet,
-            "nombre_likes": self.nombre_likes,
-            "nombre_reposts": self.nombre_reposts,
-            "nombre_replies": self.nombre_replies,
-            "nombre_views": self.nombre_views,
-            "date_tweet": self.date_tweet,
-            "identifiant": self.identifiant,
-            "req_id": self.req_id
-        }
+def convert_number(number):
+    if number:
+        
+        if number.endswith('K'):
+            return int(float(number[:-1]) * 1000)
+        elif number.endswith('M'):
+            return int(float(number[:-1]) * 1000000)
+        else:
+            return int(number)
+    else:
+        return 0
+    
 
 # Fonction pour effectuer le login
 def login(bot):
@@ -121,26 +77,15 @@ def perform_scroll(bot):
 
 
 #Fonction pour enregistrer les tweets dans la base de données MongoDB
-def save_tweets(tweets):
-    element = tweets.to_dict()
-    # Vérifier si un élément existe avec la valeur spécifique du champ identifiant
-    # print('identifiant : ', tweets.identifiant)
-    # print(tweet_collection.find_one({"text_tweet": tweets.text_tweet}))
-    if tweet_collection.find_one({"identifiant": element["identifiant"]}):
-        print("L'élément existe déjà")
+def save_tweets(donnee):
+    existing_tweet = DonneeCollectee.objects(identifiant=donnee.identifiant).first()
+    if existing_tweet:
         # Si l'élément existe, mettre à jour les valeurs des champs
-        tweet_collection.update_one({"identifiant": element["identifiant"]},
-                                     {"$set": {"nombre_views" : element["nombre_views"],
-                                               "nombre_likes" : element["nombre_likes"],
-                                               "nombre_reposts" : element["nombre_reposts"],
-                                               "nombre_replies" : element["nombre_replies"],
-                                               }
-                                      }, upsert=False)
-        
+        existing_tweet.update(set__nombre_views=donnee.nombre_views)
     else:
-        print("L'élément n'existe pas")
-        tweet_collection.insert_one(element)
+        donnee.save()
         
+
 def get_comment_tweet(bot, utilisateur, identifiant, search_url, scroll_position_before_click):
     tweet_url = f'https://twitter.com/{utilisateur}/status/{identifiant}'  
     bot.get(tweet_url)
@@ -177,7 +122,7 @@ def get_tweets(request, mot_cle, until_date, since_date):
     
     #options.add_argument("--headless")  Pour lancer en arrière plan
     options.add_argument("--enable-javascript")
-    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
+    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.3")
     
     # Ajouter des options pour éviter la détection automatisée
     options.add_argument("--disable-blink-features=AutomationControlled")
@@ -211,7 +156,7 @@ def get_tweets(request, mot_cle, until_date, since_date):
     time.sleep(10)
 
     # Définir le nombre maximum de défilements
-    max_scrolls = 20 
+    max_scrolls = 3 
     scroll_count = 0
     nombre_tweets = 0
     tweets = []
@@ -272,8 +217,18 @@ def get_tweets(request, mot_cle, until_date, since_date):
 
             if mot_cle in tweet_text:
                 scroll_position_before_click = bot.execute_script("return window.scrollY;")
+                donnee = DonneeCollectee(
+                    text_tweet=tweet_text,
+                    nombre_likes=convert_number(likes),
+                    nombre_reposts=convert_number(reposts),
+                    nombre_replies=convert_number(replies),
+                    nombre_views=convert_number(views),
+                    date_tweet=date,
+                    identifiant=identifiant,
+                    req_id=req_id
+                )
                 get_comment_tweet(bot, utilisateur, identifiant, search_url, scroll_position_before_click)
-                save_tweets(DonneeCollectee(tweet_text, likes, reposts, replies, views, date, identifiant,req_id))
+                save_tweets(donnee)
                 nombre_tweets += 1
                 response_text += ("\n" + str(identifiant))
 
@@ -296,13 +251,10 @@ def get_tweets(request, mot_cle, until_date, since_date):
 
 def get_dbreq_tweet(request, req_id):
     # Récupère les tweets avec le req_id correspondant de la base de données
-    # Va récupérer tout les tweets dans l'ordre trouvé dans la base donc ne changeant pas
-    # la visualisation frontend
-    tweets = DonneeCollectee.objects.filter(req_id=req_id)
+    tweets = DonneeCollectee.objects(req_id=req_id)
 
     # Convertir les tweets en un format qui peut être renvoyé en réponse
-    tweets_data = [tweet.to_dict() for tweet in tweets]
+    tweets_data = [tweet.to_mongo().to_dict() for tweet in tweets]
 
     # Renvoyer les données des tweets en tant que réponse JSON
     return JsonResponse(tweets_data, safe=False)
-

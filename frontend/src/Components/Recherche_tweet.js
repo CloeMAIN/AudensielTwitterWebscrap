@@ -26,9 +26,9 @@ function SearchEndDate({endDate,setEndDate}){
     );
 }
 
-function SubmitButton({handleSubmit}){
+function SubmitButton({handleSubmit,isLoading}){
     return(
-        <button type="submit">Rechercher</button>
+        <button type="submit" onClick = {handleSubmit} disabled={isLoading}>Rechercher</button>
     );
 }
 
@@ -43,22 +43,35 @@ function SearchBar(){
     const [tweets, setTweets] = useState([]);
     const [start,setStart] = useState(0);
     const [end,setEnd] = useState(5);
+    const [isLoading, setIsLoading] = useState(false);
 
 
 
 
     let now = new Date();
     //Pour avoir l'id de la requête dans le même format que dans le backend
-    let req_id = now.toISOString().slice(0,12);
-
+    let year = now.getFullYear();
+    let month = String(now.getMonth() + 1).padStart(2, '0'); // Les mois commencent à 0 en JavaScript
+    let day = String(now.getDate()).padStart(2, '0');
+    let hour = String(now.getHours()).padStart(2, '0');
+    let minute = String(now.getMinutes()).padStart(2, '0');
+    let req_id = `${year}${month}${day}${hour}${minute}`;
+    
     
     //Fonctions de soumission (va faire requete get_tweets par le biais url)
     const handleSubmit = async (event) => {
         event.preventDefault();
         now = new Date();
+        year = now.getFullYear();
+        month = String(now.getMonth() + 1).padStart(2, '0'); // Les mois commencent à 0 en JavaScript
+        day = String(now.getDate()).padStart(2, '0');
+        hour = String(now.getHours()).padStart(2, '0');
+        minute = String(now.getMinutes()).padStart(2, '0');
+        
+        req_id = `${year}${month}${day}${hour}${minute}`;
         // Effectuer la requête get_tweets avec keyword, beginDate et endDate
         try{
-            const response = await axios.get(`http://localhost:8000/search/${keyword}/3A${beginDate}/3A${endDate}/`);
+            const response = await axios.get(`http://localhost:8000/api/search/${keyword}/${endDate}/${beginDate}`);
             console.log(response);
             // On pourrait ajouter un élement montrant que la requête a été effectuée
             // et un autre pour montrer que la requête est toujours en cours
@@ -66,15 +79,17 @@ function SearchBar(){
             // et un autre pour montrer que la requête a échoué
         } catch (error){
             console.error(error);
+
+        } finally {
+            setIsLoading(false); // Définir isLoading à false lorsque la requête est terminée
         }
     }
 
     //Faire tourner cela toutes les 20 secondes
     const handleUpdate = async (event) => {
         event.preventDefault();
-        req_id = now.toISOString().slice(0,12);
         try{
-            const response = await axios.get(`http://localhost:8000/search_new/${req_id}`);
+            const response = await axios.get(`http://localhost:8000/api/search_new/${req_id}`);
             setTweets(response.data);
         }
         catch (error){
@@ -102,7 +117,7 @@ function SearchBar(){
                 <SearchKeyWord keyword={keyword} setKeyword={setKeyword}/>
                 <SearchBeginDate beginDate={beginDate} setBeginDate={setBeginDate}/>
                 <SearchEndDate endDate={endDate} setEndDate={setEndDate}/> 
-                <SubmitButton handleSubmit={handleSubmit}/> 
+                <SubmitButton handleSubmit={handleSubmit} isLoading={isLoading}/> 
                 {/*On doit add la fonction handleUpdate si handleSubmit pressed
                 Soit on utilise un useState de submitPressed,setSubmitPressed
                 pour déterminer quand arrêter de faire la boucle de handleUpdate*/}
