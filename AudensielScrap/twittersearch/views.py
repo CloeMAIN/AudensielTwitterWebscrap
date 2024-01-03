@@ -11,15 +11,20 @@ import random
 from django.shortcuts import render
 from .models import tweet_collection
 
+#import relative to frontend functionalities
+from datetime import datetime
+from django.http import JsonResponse
+
 # Global set to store processed tweet identifiers
 processed_tweets = set()
 
 class DonneeCollectee:
     
-    def __init__(self, text_tweet, nombre_likes, nombre_reposts, nombre_replies, nombre_views, date_tweet, identifiant_tweet, comment_tweet=None):
+    def __init__(self, text_tweet, nombre_likes, nombre_reposts, nombre_replies, nombre_views, date_tweet, identifiant_tweet, req_id, comment_tweet=None):
         self.text_tweet = text_tweet
         self.date_tweet = date_tweet
         self.identifiant = int(identifiant_tweet)
+        self.req_id = req_id
         if nombre_likes == "":
             self.nombre_likes = 0
         else:
@@ -62,7 +67,8 @@ class DonneeCollectee:
             "nombre_views": self.nombre_views,
             "date_tweet": self.date_tweet,
             "identifiant": self.identifiant,
-            "comment_tweet": self.comment_tweet
+            "comment_tweet": self.comment_tweet,
+            "req_id": self.req_id
         }
 
 def login(bot):
@@ -179,8 +185,13 @@ def extract_comments(bot, num_comments, tweet_text):
     return list(comments)  # Convert set back to a list
 
 
-
+#After test for 20 tweet asked i got 13 and then this:
+#[02/Jan/2024 23:57:57] "GET /api/search/Assur2000/2023-12-02/2023-08-16/20 HTTP/1.1" 500 104892
+#slight problem with the req_id. The date and time is based on the system time. Should try to base it on constant server.
 def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
+    #Génère un identifiant unique basé sur la date et le temps pour retrouvé les tweets scraper par une requête en particulier
+    req_id = datetime.now().strftime("%Y%m%d%H%M")
+
     global processed_tweets  # Utiliser l'ensemble global
     proxies = open("./twittersearch/proxies.txt").read().splitlines()
 
@@ -247,7 +258,7 @@ def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
             if mot_cle in tweet_text and nombre_tweets <= nb_tweets:
                 scroll_position_before_click = bot.execute_script("return window.scrollY;")
                 comments = get_comment_tweet(bot, utilisateur, identifiant, search_url, tweet_text)
-                tweets_instance = DonneeCollectee(tweet_text, likes, reposts, replies, views, date, identifiant, comments)
+                tweets_instance = DonneeCollectee(tweet_text, likes, reposts, replies, views, date, identifiant, req_id, comments)
                 # Save the tweet with comments to the database
                 save_tweets(tweets_instance)
 
