@@ -14,6 +14,7 @@ from .models import tweet_collection
 #import relative to frontend functionalities
 from datetime import datetime
 from django.http import JsonResponse
+from bson.json_util import dumps
 
 # Global set to store processed tweet identifiers
 processed_tweets = set()
@@ -292,3 +293,14 @@ def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
     return HttpResponse(response_text, content_type='text/plain')
 
 
+
+
+def get_tweet_by_reqid(request, req_id):
+     # Récupère les tweets avec le req_id correspondant de la base de données
+    tweets = tweet_collection.find({"req_id": req_id})
+
+    # Convertir les tweets en un format qui peut être renvoyé en réponse
+    tweets_data = [dumps(tweet) for tweet in tweets]
+
+    # Renvoyer les données des tweets en tant que réponse JSON
+    return JsonResponse(tweets_data, safe=False)
