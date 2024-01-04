@@ -309,25 +309,20 @@ def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
     return HttpResponse(response_text, content_type='text/plain')
 
 
-
-
-def get_tweet_by_reqid(request, req_id):
-     # Récupère les tweets avec le req_id correspondant de la base de données
-    tweets = tweet_collection.find({"req_id": req_id})
-
-    # Convertir les tweets en un format qui peut être renvoyé en réponse
-    tweets_data = [dumps(tweet) for tweet in tweets]
-
-    # Renvoyer les données des tweets en tant que réponse JSON
-    return JsonResponse(tweets_data, safe=False)
+from bson import json_util
+import json
 
 def get_all_tweet(request):
     tweets = tweet_collection.find()
-    tweet_data = [dumps(tweet) for tweet in tweets]
-    return JsonResponse(tweet_data,safe = False)
+    tweet_data = [json.loads(json_util.dumps(tweet)) for tweet in tweets]
+    return JsonResponse(tweet_data, safe=False)
 
+def get_tweet_by_reqid(request, req_id):
+    tweets = tweet_collection.find({"req_id": req_id})
+    tweet_data = [json.loads(json_util.dumps(tweet)) for tweet in tweets]
+    return JsonResponse(tweet_data, safe=False)
 
 def get_all_req(request):
     reqs = req_collection.find()
-    req_data = [dumps(req) for req in reqs]
-    return JsonResponse(req_data,safe=False)
+    req_data = [json.loads(json_util.dumps(req)) for req in reqs]
+    return JsonResponse(req_data, safe=False)

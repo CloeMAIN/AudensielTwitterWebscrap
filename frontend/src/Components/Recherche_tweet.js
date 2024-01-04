@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
 function SearchKeyWord({keyword,setKeyword}){
@@ -53,9 +53,11 @@ function SearchBar(){
     const [start,setStart] = useState(0);
     const [end,setEnd] = useState(5);
     const [isLoading, setIsLoading] = useState(false);
+    const [currentReqId,setCurrentReqId] = useState('');
 
-
-
+    useEffect(() => {
+        console.log(tweets);
+    }, [tweets]);
 
 
     let now = new Date();
@@ -79,6 +81,7 @@ function SearchBar(){
         minute = String(now.getMinutes()).padStart(2, '0');
         
         req_id = `${year}${month}${day}${hour}${minute}`;
+        setCurrentReqId(req_id);
         // Effectuer la requête get_tweets avec keyword, beginDate et endDate
         try{
             const response = await axios.get(`http://localhost:8000/api/search/${keyword}/${endDate}/${beginDate}/${numberTweet}`);
@@ -99,8 +102,9 @@ function SearchBar(){
     const handleUpdate = async (event) => {
         event.preventDefault();
         try{
-            const response = await axios.get(`http://localhost:8000/api/display_new/${req_id}`);
+            const response = await axios.get(`http://localhost:8000/api/display_new/${currentReqId}`);
             setTweets(response.data);
+            
         }
         catch (error){
             console.error(error);
@@ -140,15 +144,28 @@ function SearchBar(){
                 <button onClick={handleUpdate}>Update</button>
 
                 <div className = "TableElement">
-                    {tweets.slice(start, end).map((tweet, index) => (
-                        <div key={index}>
-                            <p>{tweet.content}</p>
-                            <p>Views: {tweet.views}</p>
-                            <p>Likes: {tweet.likes}</p>
-                            <p>Replies: {tweet.replies}</p>
-                        </div>
-                    ))}
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tweet</th>
+                                <th>Views</th>
+                                <th>Likes</th>
+                                <th>Replies</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {tweets.slice(start, end).map((tweet, index) => (
+                                <tr key={index}>
+                                    <td>{tweet.text_tweet}</td>
+                                    <td>{tweet.nombre_views}</td>
+                                    <td>{tweet.nombre_likes}</td>
+                                    <td>{tweet.nombre_replies}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
+
             </div>
         </div>
     );
