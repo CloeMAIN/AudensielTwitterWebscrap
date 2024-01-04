@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 import time
 import random
 from django.shortcuts import render
-from .models import tweet_collection
+from .models import tweet_collection,req_collection
 
 #import relative to frontend functionalities
 from datetime import datetime
@@ -193,6 +193,17 @@ def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
     #Génère un identifiant unique basé sur la date et le temps pour retrouvé les tweets scraper par une requête en particulier
     req_id = datetime.now().strftime("%Y%m%d%H%M")
 
+    #We add the request to a database (to have records of every request made)
+    req_doc = {
+        "req_id": req_id,
+        "mot_cle": mot_cle,
+        "date_fin": until_date,
+        "date_debut": since_date,
+        "nb_tweets": nb_tweets,
+        "last_date_pulled": ""
+    }
+
+    req_collection.insert_one(req_doc)
     global processed_tweets  # Utiliser l'ensemble global
     proxies = open("./twittersearch/proxies.txt").read().splitlines()
 
@@ -256,13 +267,18 @@ def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
             identifiant = url_segments[3]
             utilisateur = url_segments[1]
 
-            if mot_cle in tweet_text and nombre_tweets <= nb_tweets:
+            if (mot_cle in tweet_text) and(nombre_tweets <= nb_tweets) and (identifiant not in processed_tweets):
                 scroll_position_before_click = bot.execute_script("return window.scrollY;")
                 comments = get_comment_tweet(bot, utilisateur, identifiant, search_url, tweet_text)
                 tweets_instance = DonneeCollectee(tweet_text, likes, reposts, replies, views, date, identifiant, req_id, comments)
                 # Save the tweet with comments to the database
                 save_tweets(tweets_instance)
 
+                #updating the request attribute (last_tweet_pulled)
+                req_collection.update_one(
+                    {"req_id":req_id},
+                    {"$set": {"last_date_pulled": date}}
+                )
                 nombre_tweets += 1
                 response_text += ("\n" + str(identifiant))
 
@@ -304,3 +320,14 @@ def get_tweet_by_reqid(request, req_id):
 
     # Renvoyer les données des tweets en tant que réponse JSON
     return JsonResponse(tweets_data, safe=False)
+
+def get_all_tweet(request):
+    tweets = tweet_collection.find()
+    tweet_data = [dumps(tweet) for tweet in tweets]
+    return JsonResponse(tweet_data,safe = False)
+
+
+def get_all_req(request):
+    reqs = req_collection.find()
+    req_data = [dumps(req) for req in reqs]
+    return JsonResponse(req_data,safe=False)

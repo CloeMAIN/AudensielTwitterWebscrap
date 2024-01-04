@@ -26,6 +26,14 @@ function SearchEndDate({endDate,setEndDate}){
     );
 }
 
+function SearchNumberTweet({numberTweet,setNumberTweet}){
+    return(
+        <form>
+            <input type="number" placeholder="Nb de tweet demander" value={numberTweet} onChange={(e) => setNumberTweet(e.target.value)}/>
+        </form>
+    );
+}
+
 function SubmitButton({handleSubmit,isLoading}){
     return(
         <button type="submit" onClick = {handleSubmit} disabled={isLoading}>Rechercher</button>
@@ -40,10 +48,12 @@ function SearchBar(){
     const [keyword, setKeyword] = useState('');
     const [beginDate, setBeginDate] = useState('');
     const [endDate, setEndDate] = useState('');
+    const [numberTweet, setNumberTweet] = useState('');
     const [tweets, setTweets] = useState([]);
     const [start,setStart] = useState(0);
     const [end,setEnd] = useState(5);
     const [isLoading, setIsLoading] = useState(false);
+
 
 
 
@@ -71,7 +81,7 @@ function SearchBar(){
         req_id = `${year}${month}${day}${hour}${minute}`;
         // Effectuer la requête get_tweets avec keyword, beginDate et endDate
         try{
-            const response = await axios.get(`http://localhost:8000/api/search/${keyword}/${endDate}/${beginDate}`);
+            const response = await axios.get(`http://localhost:8000/api/search/${keyword}/${endDate}/${beginDate}/${numberTweet}`);
             console.log(response);
             // On pourrait ajouter un élement montrant que la requête a été effectuée
             // et un autre pour montrer que la requête est toujours en cours
@@ -85,11 +95,11 @@ function SearchBar(){
         }
     }
 
-    //Faire tourner cela toutes les 20 secondes
+    //Faire tourner cela toutes les 20 secondes ou a chaque update demandé par l'utilisateur 
     const handleUpdate = async (event) => {
         event.preventDefault();
         try{
-            const response = await axios.get(`http://localhost:8000/api/search_new/${req_id}`);
+            const response = await axios.get(`http://localhost:8000/api/display_new/${req_id}`);
             setTweets(response.data);
         }
         catch (error){
@@ -116,7 +126,8 @@ function SearchBar(){
             <form onSubmit={handleSubmit}>
                 <SearchKeyWord keyword={keyword} setKeyword={setKeyword}/>
                 <SearchBeginDate beginDate={beginDate} setBeginDate={setBeginDate}/>
-                <SearchEndDate endDate={endDate} setEndDate={setEndDate}/> 
+                <SearchEndDate endDate={endDate} setEndDate={setEndDate}/>
+                <SearchNumberTweet numberTweet={numberTweet} setNumberTweet={setNumberTweet}/> 
                 <SubmitButton handleSubmit={handleSubmit} isLoading={isLoading}/> 
                 {/*On doit add la fonction handleUpdate si handleSubmit pressed
                 Soit on utilise un useState de submitPressed,setSubmitPressed
