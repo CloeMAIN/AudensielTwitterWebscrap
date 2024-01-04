@@ -40,6 +40,13 @@ function SubmitButton({handleSubmit,isLoading}){
     );
 }
 
+function SearchReqId({reqId, setReqId}){
+    return(
+        <form>
+            <input type="text" placeholder="ID de la requête" value={reqId} onChange={(e) => setReqId(e.target.value)}/>
+        </form>
+    );
+}
 
 function SearchBar(){
     // Definition fonction
@@ -54,7 +61,7 @@ function SearchBar(){
     const [end,setEnd] = useState(5);
     const [isLoading, setIsLoading] = useState(false);
     const [currentReqId,setCurrentReqId] = useState('');
-
+    const [reqId, setReqId] = useState('');
     useEffect(() => {
         console.log(tweets);
     }, [tweets]);
@@ -101,9 +108,11 @@ function SearchBar(){
     //Faire tourner cela toutes les 20 secondes ou a chaque update demandé par l'utilisateur 
     const handleUpdate = async (event) => {
         event.preventDefault();
+        const id = reqId !== '' ? reqId : currentReqId;
         try{
-            const response = await axios.get(`http://localhost:8000/api/display_new/${currentReqId}`);
+            const response = await axios.get(`http://localhost:8000/api/display_new/${id}`);
             setTweets(response.data);
+            console.log(response);
             
         }
         catch (error){
@@ -133,9 +142,11 @@ function SearchBar(){
                 <SearchEndDate endDate={endDate} setEndDate={setEndDate}/>
                 <SearchNumberTweet numberTweet={numberTweet} setNumberTweet={setNumberTweet}/> 
                 <SubmitButton handleSubmit={handleSubmit} isLoading={isLoading}/> 
+                <SearchReqId reqId={reqId} setReqId={setReqId}/>
                 {/*On doit add la fonction handleUpdate si handleSubmit pressed
                 Soit on utilise un useState de submitPressed,setSubmitPressed
                 pour déterminer quand arrêter de faire la boucle de handleUpdate*/}
+                
             </form>
 
             <div className = "TweetTable">
