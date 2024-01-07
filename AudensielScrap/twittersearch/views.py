@@ -165,8 +165,8 @@ def get_tweets(request, mot_cle, until_date, since_date):
     
     #options.add_argument("--headless")  Pour lancer en arrière plan
     options.add_argument("--enable-javascript")
-    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
-    
+    # options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
+    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.3")
     # Ajouter des options pour éviter la détection automatisée
     options.add_argument("--disable-blink-features=AutomationControlled")
     
