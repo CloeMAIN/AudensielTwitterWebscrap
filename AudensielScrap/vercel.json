@@ -1,16 +1,13 @@
 {
-    "functions": {
-      "api": {
-        "src": "AudensielScrap/wsgi.py",
-        "runtime": "python3.9",
-        "maxLambdaSize": "15mb",
-        "routes": [
-          {
-            "src": "/(.*)",
-            "dest": "AudensielScrap/wsgi.py"
-          }
-        ]
-      }
+     "builds": [{
+    "src": "AudensielScrap/wsgi.py",
+    "use": "@vercel/python",
+    "config": { "maxLambdaSize": "15mb", "runtime": "python3.9" }
+}],
+"routes": [
+    {
+        "src": "/(.*)",
+        "dest": "AudensielScrap/wsgi.py"
     }
-  }
-  
+]
+}
