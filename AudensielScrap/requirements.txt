@@ -54,9 +54,7 @@ cssselect==1.2.0
 # cupshelpers==1.0
 cycler==0.12.1
 dataclasses==0.6
-dbus-python
-libdbus-1-dev
-dbus-1-devel
+dbus-python==1.2.16
 # defer==1.0.6
 Deprecated==1.2.13
 dill==0.3.1.1
