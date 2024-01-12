@@ -171,10 +171,10 @@ pyparsing==3.0.9
 pyppeteer==1.0.2
 pyquery==2.0.0
 pyRFC3339==1.1
-pyrsistent==0.19.3
+# pyrsistent==0.19.3
 # pyserial==3.4
 # PySocks==1.7.1
-python-apt==2.0.0
+# python-apt==2.0.0
 python-daemon==3.0.1
 python-dateutil==2.8.2
 python-debian==0.1.49
