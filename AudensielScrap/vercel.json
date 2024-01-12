@@ -20,9 +20,7 @@
       "audensielScrap": {
         "runtime": "python3.9",
         "includeFiles": ["vercel-install.sh"],
-        "environment": {
-          "CI": "true"
-        }
+        "memory": 1024
       }
     }
   }
