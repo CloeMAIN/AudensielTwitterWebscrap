@@ -46,7 +46,7 @@ ConfigUpdater==3.1.1
 connexion==2.14.1
 constantly==15.1.0
 contourpy==1.1.1
-cricket-cli==1.0.0b3
+# cricket-cli==1.0.0b3
 cron-descriptor==1.2.32
 croniter==1.3.8
 cryptography==41.0.5
