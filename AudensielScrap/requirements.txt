@@ -222,7 +222,7 @@ trio-websocket==0.11.1
 Twisted==18.9.0
 twitter-scraper==0.4.4
 typing_extensions==4.4.0
-ubuntu-advantage-tools==27.10
+# ubuntu-advantage-tools==27.10
 uc-micro-py==1.0.1
 ufw==0.36
 unattended-upgrades==0.1
