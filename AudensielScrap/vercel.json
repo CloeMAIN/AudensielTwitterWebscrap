@@ -19,9 +19,11 @@
     "functions": {
       "audensielScrap": {
         "runtime": "python3.9",
-        "includeFiles": "vercel-install.sh",
         "memory": 1024
       }
+    },
+    "env": {
+      "VERCEL_INSTALL_DIR": "/vercel/path0/AudensielScrap"
     }
   }
   
