@@ -173,7 +173,7 @@ pyquery==2.0.0
 pyRFC3339==1.1
 pyrsistent==0.19.3
 pyserial==3.4
-PySocks==1.7.1
+# PySocks==1.7.1
 python-apt==2.0.0+ubuntu0.20.4.8
 python-daemon==3.0.1
 python-dateutil==2.8.2
