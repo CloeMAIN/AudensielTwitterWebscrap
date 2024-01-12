@@ -160,7 +160,7 @@ pycryptodome==3.18.0
 pycups==1.9.73
 pyee==8.2.2
 Pygments==2.14.0
-PyGObject==3.36.0
+# PyGObject==3.36.0
 PyHamcrest==1.9.0
 PyJWT==2.6.0
 pymacaroons==0.13.0
