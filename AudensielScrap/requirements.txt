@@ -33,7 +33,7 @@ chardet==3.0.4
 charset-normalizer==2.1.1
 click==8.1.3
 click-didyoumean==0.3.0
-click-plugins==1.1.1
+# click-plugins==1.1.1
 click-repl==0.2.0
 clickclick==20.10.2
 # cloud-init==22.2
@@ -45,7 +45,7 @@ configobj==5.0.6
 ConfigUpdater==3.1.1
 connexion==2.14.1
 constantly==15.1.0
-contourpy==1.1.1
+# contourpy==1.1.1
 # cricket-cli==1.0.0b3
 cron-descriptor==1.2.32
 croniter==1.3.8
