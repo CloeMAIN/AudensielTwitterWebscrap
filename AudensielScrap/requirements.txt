@@ -182,7 +182,7 @@ python-nvd3==0.15.0
 python-slugify==7.0.0
 pytz==2022.7.1
 pytzdata==2020.1
-# PyYAML==6.0
+PyYAML
 redis==4.5.4
 requests==2.28.2
 requests-html==0.10.0
