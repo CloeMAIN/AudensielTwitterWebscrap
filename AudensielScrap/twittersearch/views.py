@@ -9,16 +9,19 @@ from bs4 import BeautifulSoup
 import time
 import random
 from django.shortcuts import render
-from .models import tweet_collection,req_collection
+
 
 #import relative to frontend functionalities
 from datetime import datetime
 from django.http import JsonResponse
 from bson.json_util import dumps
+from .models import  tweet_collection
 
 # Global set to store processed tweet identifiers
 processed_tweets = set()
-
+def random_sleep():
+    time.sleep(random.uniform(2, 5))
+    
 class DonneeCollectee:
     
     def __init__(self, text_tweet, nombre_likes, nombre_reposts, nombre_replies, nombre_views, date_tweet, identifiant_tweet, req_id, comment_tweet=None):
@@ -75,7 +78,7 @@ class DonneeCollectee:
 def login(bot):
     bot.get('https://twitter.com/i/flow/login')
 
-    username_input = WebDriverWait(bot, 10).until(
+    username_input = WebDriverWait(bot, 5).until(
         EC.presence_of_element_located((By.CLASS_NAME, 'r-1yadl64'))
     )
     username_input.send_keys('@UserNumber59901')
@@ -83,12 +86,12 @@ def login(bot):
     button = bot.find_element(By.CSS_SELECTOR, 'div.css-175oi2r.r-1ny4l3l.r-6koalj.r-16y2uox div.css-175oi2r.r-16y2uox.r-1jgb5lz.r-13qz1uu div:nth-child(6)')
     button.click()
 
-    password_input = WebDriverWait(bot, 10).until(
+    password_input = WebDriverWait(bot, 5).until(
         EC.presence_of_element_located((By.CSS_SELECTOR, 'div.css-175oi2r input[type="password"]')))
     password_input.send_keys('aMkiuzi77/P')
     password_input.send_keys(Keys.RETURN)
 
-    time.sleep(random.uniform(2, 5))
+    random_sleep()
 
 
 
@@ -132,8 +135,7 @@ def save_tweets(tweets):
         tweet_collection.insert_one(element)
 
 
-def random_sleep():
-    time.sleep(random.uniform(2, 5))
+
 
 def perform_scroll(bot):
     page_height = bot.execute_script("return document.body.scrollHeight")
@@ -148,18 +150,14 @@ def get_comment_tweet(bot, utilisateur, identifiant, search_url, tweet_text):
     tweet_url = f'https://twitter.com/{utilisateur}/status/{identifiant}'
     bot.get(tweet_url)
 
-    time.sleep(5)
+    random_sleep()
 
     scroll_position_before_click = bot.execute_script("return window.scrollY;")
     # Wait for the comments section to load
-    WebDriverWait(bot, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, '[data-testid="tweet"] [data-testid="tweetText"]')))
+    WebDriverWait(bot, 5).until(EC.presence_of_element_located((By.CSS_SELECTOR, '[data-testid="tweet"] [data-testid="tweetText"]')))
     # Extract comments from the individual tweet page here
     comments = extract_comments(bot, 10, tweet_text)
     print(f"Comments for tweet {identifiant}: {comments}")
-
-    bot.get(search_url)
-    random_sleep()
-    bot.execute_script(f"window.scrollTo(0, {scroll_position_before_click});")
     random_sleep()
     return comments
 
@@ -203,7 +201,7 @@ def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
         "last_date_pulled": ""
     }
 
-    req_collection.insert_one(req_doc)
+    #req_collection.insert_one(req_doc)
     global processed_tweets  # Utiliser l'ensemble global
     proxies = open("./twittersearch/proxies.txt").read().splitlines()
 
@@ -229,23 +227,24 @@ def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
     search_url = f'https://twitter.com/search?q={mot_cle}%20until%3A{until_date}%20since%3A{since_date}&src=typed_query&f=live'
     bot.get(search_url)
 
-    time.sleep(10)
+    random_sleep()
 
     max_scrolls = 20
     scroll_count = 0
     nombre_tweets = 0
 
-    while nombre_tweets <= nb_tweets :
-        
+    liste_tweets = [] 
+    while nombre_tweets <= nb_tweets:
         soup = BeautifulSoup(bot.page_source, 'html.parser')
         tweet_elements = soup.find_all(attrs={'data-testid': 'tweet'})
 
         response_text = ""
+        
 
         for tweet_element in tweet_elements:
             tweet_div_text = tweet_element.find(attrs={'data-testid': 'tweetText'})
             if tweet_div_text is not None:
-                tweet_text = tweet_div_text.get_text(strip= False)
+                tweet_text = tweet_div_text.get_text(strip=False)
             else:
                 continue
 
@@ -267,26 +266,16 @@ def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
             identifiant = url_segments[3]
             utilisateur = url_segments[1]
 
-            if (mot_cle in tweet_text) and(nombre_tweets <= nb_tweets) and (identifiant not in processed_tweets):
-                scroll_position_before_click = bot.execute_script("return window.scrollY;")
-                comments = get_comment_tweet(bot, utilisateur, identifiant, search_url, tweet_text)
-                tweets_instance = DonneeCollectee(tweet_text, likes, reposts, replies, views, date, identifiant, req_id, comments)
-                # Save the tweet with comments to the database
-                save_tweets(tweets_instance)
-
-                #updating the request attribute (last_tweet_pulled)
-                req_collection.update_one(
-                    {"req_id":req_id},
-                    {"$set": {"last_date_pulled": date}}
-                )
-                nombre_tweets += 1
-                response_text += ("\n" + str(identifiant))
-
-                processed_tweets.add(identifiant)  # Ajouter l'identifiant du tweet traité à l'ensemble
-                
-        useragent = random.choice(useragentarray)
-        bot.execute_cdp_cmd("Network.setUserAgentOverride", {"userAgent": useragent})
-
+            if (mot_cle in tweet_text) and (nombre_tweets <= nb_tweets) and (identifiant not in processed_tweets):
+                if not tweet_collection.find_one({"identifiant": identifiant}):
+                    tweets_instance = DonneeCollectee(tweet_text, likes, reposts, replies, views, date, identifiant, req_id, [])
+                    # Ajouter l'instance de tweet à la liste de tweets
+                    liste_tweets.append(tweets_instance)
+                    nombre_tweets += 1
+                    response_text += f"\n{identifiant}"
+                    processed_tweets.add(identifiant)  # Ajouter l'identifiant du tweet traité à l'ensemble
+                    print (f"Nombre de tweets : {nombre_tweets}")
+            
         if scroll_count % 5 == 0:
             options.add_argument("--proxy-server=%s" % proxies[scroll_count % 5])
         perform_scroll(bot)
@@ -294,10 +283,18 @@ def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
         random_sleep()
 
         if scroll_count % 10 == 0:
-            time.sleep(10)
+            random_sleep()
             
         print(f"Scroll count: {scroll_count}")
-        scroll_count += 1
+        scroll_count += 1    
+
+
+    # Récupérer les commentaires de chaque tweet et sauvegarder
+    for tweet_instance in liste_tweets:
+        comments = get_comment_tweet(bot, utilisateur, tweet_instance.identifiant, search_url ,tweet_instance.text_tweet)
+        tweet_instance.add_comment(comments)
+        save_tweets(tweet_instance)
+    
 
     print(f"Nombre de tweets : {nombre_tweets}")
 
@@ -307,22 +304,3 @@ def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
         f.write(soup.prettify())
 
     return HttpResponse(response_text, content_type='text/plain')
-
-
-from bson import json_util
-import json
-
-def get_all_tweet(request):
-    tweets = tweet_collection.find()
-    tweet_data = [json.loads(json_util.dumps(tweet)) for tweet in tweets]
-    return JsonResponse(tweet_data, safe=False)
-
-def get_tweet_by_reqid(request, req_id):
-    tweets = tweet_collection.find({"req_id": req_id})
-    tweet_data = [json.loads(json_util.dumps(tweet)) for tweet in tweets]
-    return JsonResponse(tweet_data, safe=False)
-
-def get_all_req(request):
-    reqs = req_collection.find()
-    req_data = [json.loads(json_util.dumps(req)) for req in reqs]
-    return JsonResponse(req_data, safe=False)
