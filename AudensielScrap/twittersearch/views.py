@@ -122,8 +122,7 @@ def save_tweets(tweets):
                                      {"$set": {"nombre_views": element["nombre_views"],
                                                "nombre_likes": element["nombre_likes"],
                                                "nombre_reposts": element["nombre_reposts"],
-                                               "nombre_replies": element["nombre_replies"],
-                                               "comment_tweet": element["comment_tweet"]
+                                               "nombre_replies": element["nombre_replies"]
                                                }
                                       }, upsert=False)
 
@@ -185,6 +184,56 @@ def extract_comments(bot, num_comments, tweet_text):
 
     return list(comments)  # Convert set back to a list
 
+def scrap_tweets(tweet_elements, bot, search_url, mot_cle, nombre_tweets, nb_tweets, req_id, response_text):
+
+    for tweet_element in  tweet_elements:
+        #Extracting the tweet text using the data-testid attribute
+        tweet_div_text = tweet_element.find(attrs={'data-testid': 'tweetText'})
+        if tweet_div_text is not None:
+            tweet_text = tweet_div_text.get_text(strip= False)
+        else:
+            continue
+
+        #Extracting the tweet details (likes, reposts, replies, views) using the data-testid attribute
+        details = tweet_element.find_all(attrs={'data-testid': 'app-text-transition-container'})
+        replies = details[0].get_text(strip=True)
+        reposts = details[1].get_text(strip=True)
+        likes = details[2].get_text(strip=True)
+
+        # Make sure there are at least 4 items in details before trying to access index 3 (sometimes views are at 0 and so not included in the list)
+        views = details[3].get_text(strip=True) if len(details) >= 4 else ""
+
+        #Extracting the emission date of the tweet using the data-testid attribute
+        user_info = tweet_element.find(attrs={'data-testid': 'User-Name'})
+        user_info2 = user_info.find_all('a', href=True)
+        user_info = user_info.find('time')
+        date = user_info['datetime'][0:10]
+
+        #Extracting the tweet identifier using the data-testid attribute to avoid duplicate in the database
+        user_info2 = user_info2[2]['href']
+        url_segments = user_info2.split("/")
+        identifiant = url_segments[3]
+        utilisateur = url_segments[1]
+
+        if (mot_cle in tweet_text) and(nombre_tweets <= nb_tweets) and (identifiant not in processed_tweets):
+            scroll_position_before_click = bot.execute_script("return window.scrollY;")
+            comments = get_comment_tweet(bot, utilisateur, identifiant, search_url, tweet_text)
+            tweets_instance = DonneeCollectee(tweet_text, likes, reposts, replies, views, date, identifiant, req_id, comments)
+            # Save the tweet with comments to the database
+            save_tweets(tweets_instance)
+
+            #updating the request attribute (last_tweet_pulled)
+            req_collection.update_one(
+                {"req_id":req_id},
+                {"$set": {"last_date_pulled": date}}
+            )
+            nombre_tweets += 1
+            response_text += ("\n" + str(identifiant))
+
+            processed_tweets.add(identifiant)  # Ajouter l'identifiant du tweet traité à l'ensemble
+
+    return nombre_tweets, response_text
+
 
 #After test for 20 tweet asked i got 13 and then this:
 #[02/Jan/2024 23:57:57] "GET /api/search/Assur2000/2023-12-02/2023-08-16/20 HTTP/1.1" 500 104892
@@ -242,47 +291,9 @@ def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
 
         response_text = ""
 
-        for tweet_element in tweet_elements:
-            tweet_div_text = tweet_element.find(attrs={'data-testid': 'tweetText'})
-            if tweet_div_text is not None:
-                tweet_text = tweet_div_text.get_text(strip= False)
-            else:
-                continue
-
-            details = tweet_element.find_all(attrs={'data-testid': 'app-text-transition-container'})
-            replies = details[0].get_text(strip=True)
-            reposts = details[1].get_text(strip=True)
-            likes = details[2].get_text(strip=True)
-
-            # Make sure there are at least 4 items in details before trying to access index 3
-            views = details[3].get_text(strip=True) if len(details) >= 4 else ""
-
-            user_info = tweet_element.find(attrs={'data-testid': 'User-Name'})
-            user_info2 = user_info.find_all('a', href=True)
-            user_info = user_info.find('time')
-            date = user_info['datetime'][0:10]
-
-            user_info2 = user_info2[2]['href']
-            url_segments = user_info2.split("/")
-            identifiant = url_segments[3]
-            utilisateur = url_segments[1]
-
-            if (mot_cle in tweet_text) and(nombre_tweets <= nb_tweets) and (identifiant not in processed_tweets):
-                scroll_position_before_click = bot.execute_script("return window.scrollY;")
-                comments = get_comment_tweet(bot, utilisateur, identifiant, search_url, tweet_text)
-                tweets_instance = DonneeCollectee(tweet_text, likes, reposts, replies, views, date, identifiant, req_id, comments)
-                # Save the tweet with comments to the database
-                save_tweets(tweets_instance)
-
-                #updating the request attribute (last_tweet_pulled)
-                req_collection.update_one(
-                    {"req_id":req_id},
-                    {"$set": {"last_date_pulled": date}}
-                )
-                nombre_tweets += 1
-                response_text += ("\n" + str(identifiant))
-
-                processed_tweets.add(identifiant)  # Ajouter l'identifiant du tweet traité à l'ensemble
+        #Call of the function that scrap the tweets and the datas associated with them
+        nombre_tweets, response_text = scrap_tweets(tweet_elements, bot, search_url, mot_cle, nombre_tweets, nb_tweets, req_id, response_text)
+        
                 
         useragent = random.choice(useragentarray)
         bot.execute_cdp_cmd("Network.setUserAgentOverride", {"userAgent": useragent})
