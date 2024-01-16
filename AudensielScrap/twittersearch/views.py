@@ -233,7 +233,7 @@ def get_tweets(request, mot_cle, until_date, since_date, nb_tweets): # Fonction 
     proxies = open("./twittersearch/proxies.txt").read().splitlines() # Lire les proxies à partir du fichier proxies.txt pour ne pas être bloqué par Twitter
     # Initialiser le navigateur
     options = webdriver.ChromeOptions()
-
+    #options.add_argument("--headless")  #Pour lancer en arrière plan
     options.add_argument("--enable-javascript")
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.3")
     options.add_argument("--disable-blink-features=AutomationControlled")
