@@ -91,7 +91,8 @@ function SearchBar(){
         setCurrentReqId(req_id);
         // Effectuer la requête get_tweets avec keyword, beginDate et endDate
         try{
-            const response = await axios.get(`http://localhost:8000/api/search/${keyword}/${endDate}/${beginDate}/${numberTweet}`);
+            //const response = await axios.get(`http://localhost:8000/api/search/${keyword}/${endDate}/${beginDate}/${numberTweet}`);
+            const response = await axios.get(`https://scrappertwitter.pythonanywhere.com/api/search/${keyword}/${endDate}/${beginDate}/${numberTweet}`);
             console.log(response);
             // On pourrait ajouter un élement montrant que la requête a été effectuée
             // et un autre pour montrer que la requête est toujours en cours
