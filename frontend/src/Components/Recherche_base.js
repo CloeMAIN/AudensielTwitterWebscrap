@@ -6,8 +6,8 @@ function ReqTable() {
     const [data, setData] = useState([]);
 
     const fetchData = async () => {
-        //const response = await axios.get('http://localhost:8000/api/display_req');
-        const response = await axios.get('https://scrappertwitter.pythonanywhere.com/api/display_req');
+        const response = await axios.get('http://localhost:8000/api/display_req');
+        //const response = await axios.get('https://scrappertwitter.pythonanywhere.com/api/display_req');
         
         setData(response.data);
     };
