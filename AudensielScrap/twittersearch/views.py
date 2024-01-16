@@ -99,29 +99,6 @@ def login(bot): # Fonction pour se connecter à Twitter
     
 
 
-
-# A garder ou pas ?
-    
-""" def get_comment_tweet(bot, utilisateur, identifiant, search_url):
-    tweet_url = f'https://twitter.com/{utilisateur}/status/{identifiant}'
-    bot.get(tweet_url)
-
-    time.sleep(5)
-
-    comment_elements = bot.find_elements(By.XPATH, '//div[@data-testid="tweet"]//div[@data-testid="reply"]')[:10]
-
-    comments_text = []
-    for comment_element in comment_elements:
-        comment_text = comment_element.text
-        comments_text.append(comment_text)
-
-    tweet_data = DonneeCollectee("", "", "", "", "", "", "")
-    for comment_text in comments_text:
-        tweet_data.add_comment(comment_text)
-
-    bot.get(search_url)
-    random_sleep()
- """
 def save_tweets(tweets): # Fonction pour enregistrer les tweets dans la base de données
     element = tweets.to_dict()
 
@@ -235,11 +212,6 @@ def scrap_tweets(tweet_elements, bot, search_url, mot_cle, nombre_tweets, nb_twe
     return nombre_tweets, response_text, liste_tweets, utilisateurs
 
 
-# Les commentaires d'en dessous sont à garder ou pas ?
-
-#After test for 20 tweet asked i got 13 and then this:
-#[02/Jan/2024 23:57:57] "GET /api/search/Assur2000/2023-12-02/2023-08-16/20 HTTP/1.1" 500 104892
-#slight problem with the req_id. The date and time is based on the system time. Should try to base it on constant server.
 
 def get_tweets(request, mot_cle, until_date, since_date, nb_tweets): # Fonction pour récupérer les tweets
     #Génère un identifiant unique basé sur la date et le temps pour retrouvé les tweets scraper par une requête en particulier
@@ -337,7 +309,7 @@ def get_tweets(request, mot_cle, until_date, since_date, nb_tweets): # Fonction 
 
 
 
-from bson import json_util # ici c'est écrit bson c'est une faute ?
+from bson import json_util 
 import json
 
 def get_all_tweet(request): # Fonction pour récupérer tous les tweets
