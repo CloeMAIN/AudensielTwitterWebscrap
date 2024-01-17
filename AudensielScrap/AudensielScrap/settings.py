@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-62f-3=v7_k3+kq=40j(%q)%u-e3goqiqv&ca)a^1p9&c*&*&*%
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['.versel.app, audensiel-twitter-webscrap-aveedswh9.vercel.app']
+ALLOWED_HOSTS = ['audensiel-twitter-webscrap-aveedswh9.vercel.app']
 
 
 # Application definition
