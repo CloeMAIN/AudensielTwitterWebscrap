@@ -5,12 +5,14 @@ import { useTable, usePagination, useFilters } from 'react-table';
 function ReqTable() {
     const [data, setData] = useState([]);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            const response = await axios.get('http://localhost:8000/api/display_req');
-            setData(response.data);
-        };
+    const fetchData = async () => {
+        const response = await axios.get('http://localhost:8000/api/display_req');
+        //const response = await axios.get('https://scrappertwitter.pythonanywhere.com/api/display_req');
+        
+        setData(response.data);
+    };
 
+    useEffect(() => {
         fetchData();
     }, []);
 
@@ -63,6 +65,7 @@ function ReqTable() {
 
     return (
         <>
+            
             <table {...getTableProps()}>
                 <thead>
                     {headerGroups.map(headerGroup => (
@@ -93,6 +96,7 @@ function ReqTable() {
                 <button onClick={() => nextPage()} disabled={!canNextPage}>
                     {'>'}
                 </button>
+                <button onClick={fetchData}>Charger les données</button>
                 <span>
                     Page{' '}
                     <strong>
@@ -117,7 +121,8 @@ function ReqTable() {
                         setPageSize(Number(e.target.value));
                     }}
                 >
-                    {[10, 20, 30, 40, 50].map(pageSize => (
+                
+                    {[5,10, 20, 30, 40, 50].map(pageSize => (
                         <option key={pageSize} value={pageSize}>
                             Show {pageSize}
                         </option>
