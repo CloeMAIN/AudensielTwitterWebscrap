@@ -14,6 +14,7 @@ from .models import tweet_collection,req_collection
 from datetime import datetime
 from django.http import JsonResponse
 from bson.json_util import dumps
+import os
 
 from decouple import config
 # Variables d'environnement pour stocker les identifiants Twitter
