@@ -22,7 +22,7 @@ USERNAME = config('USERNAME')
 USER_PASSWORD = config('USER_PASSWORD')
 
 # Obtenir le chemin du fichier chromedriver
-chromedriver_path = os.path.join(os.getcwd(), 'chromedriver')
+chromedriver_path = os.path.join(os.getcwd(), 'chromium/webdriver.py')
 
 # Initialiser le navigateur
 driver = webdriver.Chrome(executable_path=chromedriver_path)
