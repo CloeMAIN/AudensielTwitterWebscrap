@@ -27,6 +27,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['audensiel-twitter-webscrap-aveedswh9.vercel.app']
 
+USE_X_FORWARDED_HOST = True
+
 
 # Application definition
 
