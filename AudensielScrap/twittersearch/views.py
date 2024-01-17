@@ -14,18 +14,11 @@ from .models import tweet_collection,req_collection
 from datetime import datetime
 from django.http import JsonResponse
 from bson.json_util import dumps
-import os
 
 from decouple import config
 # Variables d'environnement pour stocker les identifiants Twitter
 USERNAME = config('USERNAME')
 USER_PASSWORD = config('USER_PASSWORD')
-
-# Obtenir le chemin du fichier chromedriver
-chromedriver_path = os.path.join(os.getcwd(), 'chromium/webdriver.py')
-
-# Initialiser le navigateur
-driver = webdriver.Chrome(executable_path=chromedriver_path)
 
 # Ensemble pour stocker les identifiants des tweets traités
 processed_tweets = set()
