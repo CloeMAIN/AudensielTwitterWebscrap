@@ -20,6 +20,12 @@ from decouple import config
 USERNAME = config('USERNAME')
 USER_PASSWORD = config('USER_PASSWORD')
 
+# Obtenir le chemin du fichier chromedriver
+chromedriver_path = os.path.join(os.getcwd(), 'chromedriver')
+
+# Initialiser le navigateur
+driver = webdriver.Chrome(executable_path=chromedriver_path)
+
 # Ensemble pour stocker les identifiants des tweets traités
 processed_tweets = set()
 
