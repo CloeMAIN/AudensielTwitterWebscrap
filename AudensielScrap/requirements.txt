@@ -13,3 +13,4 @@ tzdata==2023.4
 urllib3==2.1.0
 npm
 whiteNoise
+python-decouple
