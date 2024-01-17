@@ -5,6 +5,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
+from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
 import time
 import random
@@ -18,7 +19,10 @@ from bson.json_util import dumps
 from decouple import config
 # Variables d'environnement pour stocker les identifiants Twitter
 USERNAME = config('USERNAME')
-USER_PASSWORD = config('USER_PASSWORD')
+USER_PASSWORD = config('USER_PASSWORD')     
+
+# Initialisez le navigateur en utilisant le ChromeDriver géré par webdriver_manager
+driver = webdriver.Chrome(ChromeDriverManager().install())
 
 # Ensemble pour stocker les identifiants des tweets traités
 processed_tweets = set()
