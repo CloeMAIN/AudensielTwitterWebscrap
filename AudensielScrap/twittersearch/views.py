@@ -24,8 +24,19 @@ USER_PASSWORD = config('USER_PASSWORD')
 # Ensemble pour stocker les identifiants des tweets traités
 processed_tweets = set()
 
-#fonction pour faire une pause aléatoire
+
 def random_sleep():
+    """
+    fonction pour faire une pause aléatoire
+
+    parameters
+    ----------
+    None.
+
+    Returns
+    -------
+    None.
+    """
     time.sleep(random.uniform(2, 5))
     
 class DonneeCollectee: # Classe pour stocker les données d'un tweet
@@ -128,6 +139,28 @@ def perform_scroll(bot): # Fonction pour faire défiler la page
 
 
 def get_comment_tweet(bot, utilisateur, identifiant, search_url, tweet_text): # Fonction récupérer les commentaires d'un tweet
+    """
+    Récupère les commentaires d'un tweet à partir de son identifiant
+
+    Parameters
+    ----------
+    bot : webdriver
+        Le navigateur web
+    utilisateur : str
+        Le nom de l'utilisateur
+    identifiant : str
+        L'identifiant du tweet
+    search_url : str
+        L'URL de la page de recherche
+    tweet_text : str
+        Le texte du tweet pour éviter de le scraper de nouveau
+    
+    Returns
+    -------
+    list
+        La liste des commentaires
+    """
+
     tweet_url = f'https://twitter.com/{utilisateur}/status/{identifiant}'
     bot.get(tweet_url)
 
@@ -147,6 +180,24 @@ def get_comment_tweet(bot, utilisateur, identifiant, search_url, tweet_text): # 
     return comments
 
 def extract_comments(bot, num_comments, tweet_text): # Fonction pour extraire les commentaires
+    """
+    Extrait les commentaires d'un tweet 
+
+    Parameters
+    ----------
+    bot : webdriver
+        Le navigateur web
+    num_comments : int
+        Le nombre de commentaires à extraire
+    tweet_text : str
+        Le texte du tweet pour éviter de le scraper de nouveau 
+    
+    Returns
+    -------
+    list
+        La liste des commentaires 
+    
+    """
     comments = set()  # On utilise un ensemble pour stocker les commentaires uniques
 
     # Défilement de la page pour charger les commentaires supplémentaires
@@ -233,7 +284,7 @@ def get_tweets(request, mot_cle, until_date, since_date, nb_tweets): # Fonction 
     proxies = open("./twittersearch/proxies.txt").read().splitlines() # Lire les proxies à partir du fichier proxies.txt pour ne pas être bloqué par Twitter
     # Initialiser le navigateur
     options = webdriver.ChromeOptions()
-    #options.add_argument("--headless")  #Pour lancer en arrière plan
+    # options.add_argument("--headless")  #Pour lancer en arrière plan
     options.add_argument("--enable-javascript")
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.3")
     options.add_argument("--disable-blink-features=AutomationControlled")
