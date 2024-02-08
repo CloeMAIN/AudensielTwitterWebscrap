@@ -12,10 +12,6 @@ import random
 from django.shortcuts import render
 from .models import tweet_collection,req_collection
 
-import asyncio
-from pyppeteer import launch
-from chrome_aws_lambda import chrome_path
-
 from datetime import datetime
 from django.http import JsonResponse
 from bson.json_util import dumps
@@ -25,24 +21,8 @@ from decouple import config
 USERNAME = config('USERNAME')
 USER_PASSWORD = config('USER_PASSWORD')     
 
-## Initialisez le navigateur en utilisant le ChromeDriver géré par webdriver_manager
-# driver = webdriver.Chrome(ChromeDriverManager(version="121.0.6167.161").install())
-
-import os
-
-# Désactiver les fonctions qui ne sont pas prises en charge par Chrome AWS Lambda
-os.environ['PYPPETEER_CHROMIUM_REVISION'] = '809590'  # Version compatible avec chrome-aws-lambda
-
-
-async def init_browser():
-    # Utilisation du chemin de l'exécutable Chrome
-    chrome_executable_path = chrome_path()
-    browser = await launch(executablePath=config(chrome_executable_path, default=''), args=['--no-sandbox'])
-    return browser
-
-# Utilisation
-browser = asyncio.get_event_loop().run_until_complete(init_browser())
-
+# Initialisez le navigateur en utilisant le ChromeDriver géré par webdriver_manager
+driver = webdriver.Chrome(ChromeDriverManager().install())
 
 # Ensemble pour stocker les identifiants des tweets traités
 processed_tweets = set()
