@@ -1,10 +1,10 @@
 from django.http import HttpResponse
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.action_chains import ActionChains
+# from selenium import webdriver
+# from selenium.webdriver.common.by import By
+# from selenium.webdriver.support.ui import WebDriverWait
+# from selenium.webdriver.support import expected_conditions as EC
+# from selenium.webdriver.common.keys import Keys
+# from selenium.webdriver.common.action_chains import ActionChains
 from bs4 import BeautifulSoup
 import time
 import random
@@ -145,24 +145,24 @@ def perform_scroll(page, scroll_count):
     
         
 
-def get_comment_tweet(bot, utilisateur, identifiant, search_url, tweet_text): # Fonction récupérer les commentaires d'un tweet
-    tweet_url = f'https://twitter.com/{utilisateur}/status/{identifiant}'
-    bot.get(tweet_url)
+# def get_comment_tweet(bot, utilisateur, identifiant, search_url, tweet_text): # Fonction récupérer les commentaires d'un tweet
+#     tweet_url = f'https://twitter.com/{utilisateur}/status/{identifiant}'
+#     bot.get(tweet_url)
 
-    time.sleep(5)
+#     time.sleep(5)
 
-    scroll_position_before_click = bot.execute_script("return window.scrollY;") # On enregistre la position du scroll avant de cliquer sur le bouton "Afficher les commentaires"
+#     scroll_position_before_click = bot.execute_script("return window.scrollY;") # On enregistre la position du scroll avant de cliquer sur le bouton "Afficher les commentaires"
     
-    WebDriverWait(bot, 5).until(EC.presence_of_element_located((By.CSS_SELECTOR, '[data-testid="tweet"] [data-testid="tweetText"]')))
+#     WebDriverWait(bot, 5).until(EC.presence_of_element_located((By.CSS_SELECTOR, '[data-testid="tweet"] [data-testid="tweetText"]')))
     
-    comments = extract_comments(bot, 10, tweet_text) # On extrait les commentaires
-    print(f"Comments for tweet {identifiant}: {comments}")
+#     comments = extract_comments(bot, 10, tweet_text) # On extrait les commentaires
+#     print(f"Comments for tweet {identifiant}: {comments}")
 
-    bot.get(search_url) # On retourne à la page de recherche
-    random_sleep()
-    bot.execute_script(f"window.scrollTo(0, {scroll_position_before_click});")
-    random_sleep()
-    return comments
+#     bot.get(search_url) # On retourne à la page de recherche
+#     random_sleep()
+#     bot.execute_script(f"window.scrollTo(0, {scroll_position_before_click});")
+#     random_sleep()
+#     return comments
 
 
 def extract_comments(bot, num_comments, tweet_text): # Fonction pour extraire les commentaires
