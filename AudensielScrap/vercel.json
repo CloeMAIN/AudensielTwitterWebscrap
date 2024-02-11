@@ -10,6 +10,5 @@
             "dest": "AudensielScrap/wsgi.py"
         }
     ],
-    "alias": "optimisation",
-    "only": "origin/optimisation"
+    "alias": "optimisation"
 }
