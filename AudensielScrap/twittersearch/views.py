@@ -22,7 +22,11 @@ USERNAME = config('USERNAME')
 USER_PASSWORD = config('USER_PASSWORD')     
 
 # Initialisez le navigateur en utilisant le ChromeDriver géré par webdriver_manager
+from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
+
 driver = webdriver.Chrome(ChromeDriverManager().install())
+
 
 # Ensemble pour stocker les identifiants des tweets traités
 processed_tweets = set()
