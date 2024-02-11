@@ -10,12 +10,6 @@
             "dest": "AudensielScrap/wsgi.py"
         }
     ],
-    "alias": {
-        "branches": [
-            {
-                "alias": "optimisation",
-                "only": "origin/optimisation"
-            }
-        ]
-    }
+    "alias": "optimisation",
+    "only": "origin/optimisation"
 }
