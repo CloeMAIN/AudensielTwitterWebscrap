@@ -16,6 +16,13 @@ from .models import DonneeCollectee
 from datetime import datetime
 from django.http import JsonResponse
 
+<<<<<<< Updated upstream
+=======
+from decouple import config
+# Variables d'environnement pour stocker les identifiants Twitter
+USER_ID = config('USER_ID')
+USER_PASSWORD = config('USER_PASSWORD')
+>>>>>>> Stashed changes
 
 # Classe pour stocker les données collectées afin de pouvoir les enregistrer dans la base de données MongoDB
 
@@ -62,9 +69,103 @@ def login(bot):
 def random_sleep():
     time.sleep(random.uniform(2, 5))
     
+<<<<<<< Updated upstream
 # Fonction pour effectuer un scroll
 def perform_scroll(bot):
     # Définissez la hauteur totale de la page
+=======
+class DonneeCollectee: # Classe pour stocker les données d'un tweet
+    
+    def __init__(self, text_tweet, nombre_likes, nombre_reposts, nombre_replies, nombre_views, date_tweet, identifiant_tweet, req_id, comment_tweet=None):
+        self.text_tweet = text_tweet
+        self.date_tweet = date_tweet
+        self.identifiant = int(identifiant_tweet)
+        self.req_id = req_id
+        if nombre_likes == "":
+            self.nombre_likes = 0
+        else:
+            self.nombre_likes = self.convert_number(nombre_likes)
+
+        if nombre_reposts == "":
+            self.nombre_reposts = 0
+        else:
+            self.nombre_reposts = self.convert_number(nombre_reposts)
+
+        if nombre_replies == "":
+            self.nombre_replies = 0
+        else:
+            self.nombre_replies = self.convert_number(nombre_replies)
+
+        if nombre_views == "":
+            self.nombre_views = 0
+        else:
+            self.nombre_views = self.convert_number(nombre_views)
+
+        self.comment_tweet = comment_tweet if comment_tweet is not None else []
+
+    def convert_number(self, value): # Convertir les nombres en entiers
+        if value[-1] == "K":
+            return int(float(value[:-1]) * 1000)
+        elif value[-1] == "M":
+            return int(float(value[:-1]) * 1000000)
+        else:
+            return int(value)
+
+    def add_comment(self,comment): # Ajouter un commentaire à la liste des commentaires
+        self.comment_tweet.append(comment)  
+
+    def to_dict(self): # Convertir l'objet en dictionnaire
+        return {
+            "text_tweet": self.text_tweet,
+            "nombre_likes": self.nombre_likes,
+            "nombre_reposts": self.nombre_reposts,
+            "nombre_replies": self.nombre_replies,
+            "nombre_views": self.nombre_views,
+            "date_tweet": self.date_tweet,
+            "identifiant": self.identifiant,
+            "comment_tweet": self.comment_tweet,
+            "req_id": self.req_id
+        }
+
+def login(bot): # Fonction pour se connecter à Twitter
+    bot.get('https://twitter.com/i/flow/login')
+
+    username_input = WebDriverWait(bot, 50).until(
+        EC.presence_of_element_located((By.CLASS_NAME, 'r-1yadl64'))
+    )
+    username_input.send_keys(USER_ID)
+
+    button = bot.find_element(By.CSS_SELECTOR, 'div.css-175oi2r.r-1ny4l3l.r-6koalj.r-16y2uox div.css-175oi2r.r-16y2uox.r-1jgb5lz.r-13qz1uu div:nth-child(6)')
+    button.click() # Click the login button
+
+    password_input = WebDriverWait(bot, 5).until(
+        EC.presence_of_element_located((By.CSS_SELECTOR, 'div.css-175oi2r input[type="password"]')))
+    password_input.send_keys(USER_PASSWORD)
+    password_input.send_keys(Keys.RETURN)
+    random_sleep()
+    
+
+
+def save_tweets(tweets): # Fonction pour enregistrer les tweets dans la base de données
+    element = tweets.to_dict()
+
+    if tweet_collection.find_one({"identifiant": element["identifiant"]}): # Vérifier si l'élément existe déjà
+        print("L'élément existe déjà")
+        tweet_collection.update_one({"identifiant": element["identifiant"]},
+                                     {"$set": {"nombre_views": element["nombre_views"],
+                                               "nombre_likes": element["nombre_likes"],
+                                               "nombre_reposts": element["nombre_reposts"],
+                                               "nombre_replies": element["nombre_replies"]
+                                               }
+                                      }, upsert=False)
+
+    else:
+        print("L'élément n'existe pas")
+        tweet_collection.insert_one(element)
+
+
+def perform_scroll(bot): # Fonction pour faire défiler la page
+>>>>>>> Stashed changes
     page_height = bot.execute_script("return document.body.scrollHeight")
 
     # Faites défiler petit à petit la page jusqu'à la fin et ajoutez une pause aléatoire
@@ -119,13 +220,23 @@ def get_tweets(request, mot_cle, until_date, since_date):
     proxies = open("./twittersearch/proxies.txt").read().splitlines()
 
     options = webdriver.ChromeOptions()
+<<<<<<< Updated upstream
     
     #options.add_argument("--headless")  Pour lancer en arrière plan
+=======
+
+    options.add_argument("--headless")  # Run in headless mode
+    options.add_argument("--no-sandbox")  # Bypass OS security model
+    options.add_argument("--disable-dev-shm-usage")  # Overcome limited resource problems
+
+
+>>>>>>> Stashed changes
     options.add_argument("--enable-javascript")
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.3")
     
     # Ajouter des options pour éviter la détection automatisée
     options.add_argument("--disable-blink-features=AutomationControlled")
+<<<<<<< Updated upstream
     
     # Exclude the collection of enable-automation switches 
     options.add_experimental_option("excludeSwitches", ["enable-automation"]) 
@@ -135,18 +246,32 @@ def get_tweets(request, mot_cle, until_date, since_date):
     
     # Création du navigateur Chrome
     bot = webdriver.Chrome(options=options)
+=======
+    options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    options.add_experimental_option("useAutomationExtension", False)
+
+    bot = webdriver.Chrome(options)
+>>>>>>> Stashed changes
 
     # Initializing a list with two Useragents 
     useragentarray = [ 
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36", 
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36", 
     ]
+<<<<<<< Updated upstream
 
     bot.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})") 
     
     
     # Effectuer le login
     login(bot)
+=======
+    # Wait until the page is fully loaded
+    print("Ouverture webdriver")
+    WebDriverWait(bot, 10).until(EC.presence_of_element_located((By.TAG_NAME, 'body')))
+    print("body appeared completly")
+    bot.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+>>>>>>> Stashed changes
 
     # Navigation page de recherche
     search_url = f'https://twitter.com/search?q={mot_cle}%20until%3A{until_date}%20since%3A{since_date}&src=typed_query&f=live'

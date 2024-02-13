@@ -14,7 +14,7 @@ from pathlib import Path
 import os
 from mongoengine import connect
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 # Quick-start development settings - unsuitable for production
@@ -23,10 +23,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-62f-3=v7_k3+kq=40j(%q)%u-e3goqiqv&ca)a^1p9&c*&*&*%'
 
+<<<<<<< Updated upstream
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
+=======
+ALLOWED_HOSTS = [
+    '.versel.app',
+    'localhost',
+    '127.0.0.1',
+    '*'
+]
+>>>>>>> Stashed changes
 
 
 # Application definition
@@ -40,6 +49,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'twittersearch.apps.TwittersearchConfig',
     'djongo',
+<<<<<<< Updated upstream
+=======
+    'corsheaders',
+>>>>>>> Stashed changes
 ]
 
 MIDDLEWARE = [
@@ -57,7 +70,7 @@ ROOT_URLCONF = 'AudensielScrap.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'twittersearch', 'templates')],
+        'DIRS': [os.path.join(BASE_DIR,'AudensielScrap', 'twittersearch', 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -72,10 +85,18 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'AudensielScrap.wsgi.application'
 
+<<<<<<< Updated upstream
+=======
+# Other security settings
+# SECURE_SSL_REDIRECT = False
+# SESSION_COOKIE_SECURE = False
+>>>>>>> Stashed changes
 
-# Database
-# https://docs.djangoproject.com/en/4.1/ref/settings/#databases
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:3000',  # Add any other allowed origins
+]
 
+<<<<<<< Updated upstream
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'djongo',
@@ -97,6 +118,8 @@ connect(
     authentication_source='admin',
     authentication_mechanism='SCRAM-SHA-1'
 )
+=======
+>>>>>>> Stashed changes
 
 
 # Password validation
@@ -133,8 +156,23 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
+<<<<<<< Updated upstream
 STATIC_URL = '/static/'
+=======
+# Assuming BASE_DIR is defined in your settings.py
+>>>>>>> Stashed changes
 
+# Set the path to the static files directory of the React frontend
+REACT_STATIC_DIR = os.path.join(BASE_DIR, 'frontend', 'build', 'static')
+
+# Configure Django's static file settings
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [
+    REACT_STATIC_DIR,
+]
+
+# Ensure Django serves static files in production
+DEBUG = True
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
