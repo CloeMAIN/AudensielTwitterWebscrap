@@ -309,7 +309,7 @@ async def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
 
             start_time_extraction = datetime.now() # Temps de début de l'extraction des tweets
 
-            while nombre_tweets < nb_tweets:
+            while (nombre_tweets < nb_tweets or nb_tweets == 0):
                 # Récupérer les éléments de tweet
                 html_content = await page.content()
                 # Utiliser BeautifulSoup pour analyser le contenu HTML
