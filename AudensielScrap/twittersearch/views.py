@@ -86,6 +86,7 @@ class DonneeCollectee: # Classe pour stocker les données d'un tweet
 from playwright.sync_api import sync_playwright
 
 def login(page): # Fonction pour se connecter à Twitter
+    ###Timeout peut etre à augmenter car docker lent (au moins 10-30 sec)
     page.goto('https://twitter.com/i/flow/login')
     
     # Attendre que l'élément d'entrée de l'identifiant de l'utilisateur soit visible
@@ -237,6 +238,7 @@ def get_tweet_url(tweet_instance, utilisateur, number_of_comments=10):
     url = f'https://twitter.com/{utilisateur}/status/{tweet_instance.identifiant}'
     _xhr_calls = []
 
+    ###besoin d'explication
     def intercept_response(response):
         """capture all background requests and save them"""
         # we can extract details from background requests
@@ -245,7 +247,8 @@ def get_tweet_url(tweet_instance, utilisateur, number_of_comments=10):
         return response
 
     with sync_playwright() as pw:
-        browser = pw.chromium.launch(headless=False)
+        ###headless a True pour docker
+        browser = pw.chromium.launch(headless=True)
         context = browser.new_context(viewport={"width": 1920, "height": 1080})
         page = context.new_page()
 
@@ -295,16 +298,19 @@ def get_tweets(request, mot_cle, until_date, since_date, nb_tweets): # Fonction 
     start_time = datetime.now() # Temps de début de l'exécution de la fonction pour calculer le temps d'exécution
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
+        ###headless mettre a vrai pour docker
+        browser = p.chromium.launch(headless=True)
         page = browser.new_page()
         # Se connecter à Twitter
         login(page)
+        ###peut etre temp d'attente pour initialisation page (chargement) nvm
 
         # Recherche du mot clé
         search_url = f'https://twitter.com/search?q={mot_cle}%20until%3A{until_date}%20since%3A{since_date}&src=typed_query&f=live'
         page.goto(search_url)
 
         # Attendre que la page se charge
+        ### ajouter plus surement car docker lent
         time.sleep(5)
 
         max_scrolls = 20

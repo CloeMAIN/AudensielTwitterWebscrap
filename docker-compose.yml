@@ -1,0 +1,16 @@
+version: '3'
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: AudensielScrap/Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      - frontend
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "3000:3000"
