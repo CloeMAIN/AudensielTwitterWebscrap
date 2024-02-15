@@ -62,6 +62,7 @@ function SearchBar(){
     const [isLoading, setIsLoading] = useState(false);
     const [currentReqId,setCurrentReqId] = useState('');
     const [reqId, setReqId] = useState('');
+    const [requestStatus, setRequestStatus] = useState('');
     useEffect(() => {
         console.log(tweets);
     }, [tweets]);
@@ -89,24 +90,22 @@ function SearchBar(){
         
         req_id = `${year}${month}${day}${hour}${minute}`;
         setCurrentReqId(req_id);
-        // Effectuer la requête get_tweets avec keyword, beginDate et endDate
+        setRequestStatus('envoyé'); // La requête est envoyée
+    
         try{
             const response = await axios.get(`http://localhost:8000/api/search/${keyword}/${endDate}/${beginDate}/${numberTweet}`);
-            //const response = await axios.get(`https://scrappertwitter.pythonanywhere.com/api/search/${keyword}/${endDate}/${beginDate}/${numberTweet}`);
             console.log(response);
-            // On pourrait ajouter un élement montrant que la requête a été effectuée
-            // et un autre pour montrer que la requête est toujours en cours
-            // On pourrait aussi ajouter un élement montrant que la requête est terminée
-            // et un autre pour montrer que la requête a échoué
+            setRequestStatus('en cours'); // La requête est en cours
         } catch (error){
             console.error(error);
-
+            setRequestStatus('échoué'); // La requête a échoué
         } finally {
             setIsLoading(false); // Définir isLoading à false lorsque la requête est terminée
+            setRequestStatus('terminé'); // La requête est terminée
         }
     }
 
-    //Faire tourner cela toutes les 20 secondes ou a chaque update demandé par l'utilisateur 
+    //Faire tourner cela toutes les 20 secondes ou a chaque update demandé par l'utilisateur si possible
     const handleUpdate = async (event) => {
         event.preventDefault();
         const id = reqId !== '' ? reqId : currentReqId;

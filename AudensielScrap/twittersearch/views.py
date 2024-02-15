@@ -107,7 +107,25 @@ async def login(page):
     # Faire une pause aléatoire
     random_sleep()
 
-def save_tweets(tweets): # Fonction pour enregistrer les tweets dans la base de données
+
+# def save_tweets(tweets): # Fonction pour enregistrer les tweets dans la base de données
+#     element = tweets.to_dict()
+
+#     if tweet_collection.find_one({"identifiant": element["identifiant"]}): # Vérifier si l'élément existe déjà
+#         print("L'élément existe déjà")
+#         tweet_collection.update_one({"identifiant": element["identifiant"]},
+#                                      {"$set": {"nombre_views": element["nombre_views"],
+#                                                "nombre_likes": element["nombre_likes"],
+#                                                "nombre_reposts": element["nombre_reposts"],
+#                                                "nombre_replies": element["nombre_replies"]
+#                                                }
+#                                       }, upsert=False)
+
+#     else:
+#         print("L'élément n'existe pas")
+#         tweet_collection.insert_one(element)
+###Test
+def save_tweets(tweets,req_id): # Fonction pour enregistrer les tweets dans la base de données
     element = tweets.to_dict()
 
     if tweet_collection.find_one({"identifiant": element["identifiant"]}): # Vérifier si l'élément existe déjà
@@ -123,6 +141,9 @@ def save_tweets(tweets): # Fonction pour enregistrer les tweets dans la base de 
     else:
         print("L'élément n'existe pas")
         tweet_collection.insert_one(element)
+        req_collection.update_one({"req_id": req_id},
+                                  {"$set": {"last_date_pulled": element["date_tweet"]}})
+
         
 def get_new_proxy():
     # Lire les proxies à partir du fichier proxies.txt et en choisir un aléatoire
@@ -237,10 +258,36 @@ async def scrap_tweets(tweet_elements, mot_cle, nombre_tweets, nb_tweets, req_id
 
 
 
-async def get_tweet_url(tweet_instance, utilisateur):
+# async def get_tweet_url(tweet_instance, utilisateur):
+#     try:
+#         async with async_playwright() as pw:
+#             browser = await pw.chromium.launch(headless=True)
+#             context = await browser.new_context()
+#             page = await context.new_page()
+
+#             await login(page)  # Assurez-vous d'attendre que la connexion se termine
+
+#             await page.goto(f'https://twitter.com/{utilisateur}/status/{tweet_instance.identifiant}')
+
+#             await asyncio.sleep(3)  # Attendre 3 secondes pour que la page se charge complètement
+
+#             # Extraction des commentaires
+#             comments = await extract_comments(page, 10, tweet_instance.text_tweet)
+#             tweet_instance.comment_tweet = comments
+
+#             # Sauvegarde du tweet dans la base de données
+#             save_tweets(tweet_instance)
+#     except Exception as e:
+#         print(f"Une exception s'est produite lors de la récupération des données pour le tweet {tweet_instance.identifiant}: {e}")
+#     finally:
+#         if browser:
+#             await browser.close()  # Assurez-vous que le navigateur est fermé même en cas d'exception
+
+###Test update date req
+async def get_tweet_url(tweet_instance, utilisateur,req_id):
     try:
         async with async_playwright() as pw:
-            browser = await pw.chromium.launch(headless=False)
+            browser = await pw.chromium.launch(headless=True)
             context = await browser.new_context()
             page = await context.new_page()
 
@@ -255,7 +302,9 @@ async def get_tweet_url(tweet_instance, utilisateur):
             tweet_instance.comment_tweet = comments
 
             # Sauvegarde du tweet dans la base de données
-            save_tweets(tweet_instance)
+            # save_tweets(tweet_instance)
+            ###Test
+            save_tweets(tweet_instance,req_id)
     except Exception as e:
         print(f"Une exception s'est produite lors de la récupération des données pour le tweet {tweet_instance.identifiant}: {e}")
     finally:
@@ -288,7 +337,7 @@ async def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
         start_time_total = datetime.now()
 
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=False)
+            browser = await p.chromium.launch(headless=True)
             page = await browser.new_page()
 
             # Se connecter à Twitter
@@ -345,7 +394,9 @@ async def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
             for (tweet_instance, utilisateur) in zip(liste_tweets, utilisateurs):
                 #seulement si le tweet a au moins un commentaire
                 if tweet_instance.nombre_replies > 0:
-                    tasks.append(get_tweet_url(tweet_instance, utilisateur))
+                    #tasks.append(get_tweet_url(tweet_instance, utilisateur))
+                    ###Test update date req
+                    tasks.append(get_tweet_url(tweet_instance, utilisateur,req_id))
                     #je veux quon exécute nb_tweets bots en parallèle
                     if len(tasks) == 15:
                         await asyncio.gather(*tasks)
