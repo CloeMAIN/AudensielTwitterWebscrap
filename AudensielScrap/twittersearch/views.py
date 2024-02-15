@@ -27,7 +27,7 @@ processed_tweets = set()
 
 def random_sleep():
     """
-    fonction pour faire une pause aléatoire
+    Réalise une pause aléatoire entre 2 et 5 secondes. 
 
     parameters
     ----------
@@ -38,7 +38,33 @@ def random_sleep():
     None.
     """
     time.sleep(random.uniform(2, 5))
-    
+
+
+class Commentaires: # Classe pour stocker les commentaires d'un tweet
+    def __init__(self, commentaires=None, timelist=None):
+        self.commentaires = commentaires if commentaires else [] # Liste des commentaires
+        self.date_commentaire = timelist if timelist else [] # Liste des dates des commentaires
+
+
+    def add_comment(self,comment, timelist): 
+        """
+        Ajouter un commentaire à la liste des commentaires
+        """
+        for comm, time in zip(comment, timelist):
+
+            self.commentaires.append(comm)
+            self.date_commentaire.append(time)
+    def to_dict(self): 
+        """
+        Convertir l'objet en dictionnaire
+        """
+        #if not empty
+        if self.commentaires:
+            return [{"commentaire": c, "date_commentaire": d} for c, d in zip(self.commentaires, self.date_commentaire)]
+
+        else:
+            return [{"commentaire": "", "date_commentaire": ""}]
+
 class DonneeCollectee: # Classe pour stocker les données d'un tweet
     
     def __init__(self, text_tweet, nombre_likes, nombre_reposts, nombre_replies, nombre_views, date_tweet, identifiant_tweet, req_id, comment_tweet=None):
@@ -66,8 +92,9 @@ class DonneeCollectee: # Classe pour stocker les données d'un tweet
         else:
             self.nombre_views = self.convert_number(nombre_views)
 
-        self.comment_tweet = comment_tweet if comment_tweet is not None else []
+        self.comment_tweet = Commentaires() 
 
+    # === PRIVATE METHODS === # 
     def convert_number(self, value): # Convertir les nombres en entiers
         if value[-1] == "K":
             return int(float(value[:-1]) * 1000)
@@ -76,9 +103,11 @@ class DonneeCollectee: # Classe pour stocker les données d'un tweet
         else:
             return int(value)
 
-    def add_comment(self,comment): # Ajouter un commentaire à la liste des commentaires
-        self.comment_tweet.append(comment)  
+    def add_comment(self,comment, timelist): # Ajouter un commentaire à la liste des commentaires
+        self.comment_tweet.add_comment(comment, timelist) 
+        # self.comment_tweet.append([comm, time] for comm, time in zip(comment, timelist))  
 
+    # === PUBLIC METHODS === #
     def to_dict(self): # Convertir l'objet en dictionnaire
         return {
             "text_tweet": self.text_tweet,
@@ -88,7 +117,7 @@ class DonneeCollectee: # Classe pour stocker les données d'un tweet
             "nombre_views": self.nombre_views,
             "date_tweet": self.date_tweet,
             "identifiant": self.identifiant,
-            "comment_tweet": self.comment_tweet,
+            "comment_tweet": self.comment_tweet.to_dict(),
             "req_id": self.req_id
         }
 
@@ -111,8 +140,16 @@ def login(bot): # Fonction pour se connecter à Twitter
     
 
 
-def save_tweets(tweets): # Fonction pour enregistrer les tweets dans la base de données
+def save_tweets(tweets):
+    """
+    Enregistre les tweets dans la base de données. Si le tweet existe déjà, 
+    les commentaires sont ajoutés à la liste des commentaires existants et 
+    on met à jour les statistiques du tweet.
+    tweetcollection est la collection de la base de données MongoDB où les tweets sont stockés.
+
+    """
     element = tweets.to_dict()
+    print(element)
 
     if tweet_collection.find_one({"identifiant": element["identifiant"]}): # Vérifier si l'élément existe déjà
         print("L'élément existe déjà")
@@ -120,11 +157,13 @@ def save_tweets(tweets): # Fonction pour enregistrer les tweets dans la base de 
                                      {"$set": {"nombre_views": element["nombre_views"],
                                                "nombre_likes": element["nombre_likes"],
                                                "nombre_reposts": element["nombre_reposts"],
-                                               "nombre_replies": element["nombre_replies"]
+                                               "nombre_replies": element["nombre_replies"], 
+                                                # A MODIFIER: ne pas écraser les tweets existants
+                                                "comment_tweet": element["comment_tweet"] # .insert(0, element["comment_tweet"]) # Ajouter les nouveaux commentaires à la liste des commentaires existants
                                                }
                                       }, upsert=False)
 
-    else:
+    else: 
         print("L'élément n'existe pas")
         tweet_collection.insert_one(element)
 
@@ -157,8 +196,9 @@ def get_comment_tweet(bot, utilisateur, identifiant, search_url, tweet_text): # 
     
     Returns
     -------
-    list
-        La liste des commentaires
+    list, list
+        La liste des commentaires, la liste des dates de commentaires 
+    
     """
 
     tweet_url = f'https://twitter.com/{utilisateur}/status/{identifiant}'
@@ -170,18 +210,19 @@ def get_comment_tweet(bot, utilisateur, identifiant, search_url, tweet_text): # 
     
     WebDriverWait(bot, 5).until(EC.presence_of_element_located((By.CSS_SELECTOR, '[data-testid="tweet"] [data-testid="tweetText"]')))
     
-    comments = extract_comments(bot, 10, tweet_text) # On extrait les commentaires
-    print(f"Comments for tweet {identifiant}: {comments}")
+    comments, timelist = extract_comments(bot, 10, tweet_text) # On extrait les commentaires
+    # print(f"Comments for tweet {identifiant}: {comments}")
 
     bot.get(search_url) # On retourne à la page de recherche
     random_sleep()
     bot.execute_script(f"window.scrollTo(0, {scroll_position_before_click});")
     random_sleep()
-    return comments
+    return comments, timelist
 
 def extract_comments(bot, num_comments, tweet_text): # Fonction pour extraire les commentaires
     """
-    Extrait les commentaires d'un tweet 
+    Extrait les commentaires d'un tweet et parse les informations. Il est important de noter
+    que le webdriver doit déjà être sur la page du tweet pour que cette fonction fonctionne. 
 
     Parameters
     ----------
@@ -199,28 +240,68 @@ def extract_comments(bot, num_comments, tweet_text): # Fonction pour extraire le
     
     """
     comments = set()  # On utilise un ensemble pour stocker les commentaires uniques
-
+    time_set = set()
     # Défilement de la page pour charger les commentaires supplémentaires
     for _ in range(num_comments // 5):  # 5 commentaires sont chargés à la fois
         
         page_height = bot.execute_script("return document.body.scrollHeight")
         bot.execute_script(f"window.scrollTo(0, {page_height/2});")
         soup = BeautifulSoup(bot.page_source, 'html.parser')
+        # save soup to file with random name for debugging
+        # with open(f'data/twitterComment{random.random()}.html', 'w', encoding='utf-8') as f:
+        #     # url for debugging
+        #     f.write(bot.current_url)
+        #     f.write(soup.prettify())
         commententaires = soup.find_all(attrs={'data-testid': 'tweet'})
-        
-        for comment in commententaires:
+        time_elements = soup.find_all('time')
+
+        for comment, time in zip(commententaires, time_elements):
             comment_text = comment.find(attrs={'data-testid': 'tweetText'})
+            time = time['datetime'][0:10]
             if comment_text is not None and comment_text.get_text(strip=True) != tweet_text: # On vérifie que le commentaire n'est pas le même que le tweet
                 comment_text = comment_text.get_text(strip=True)
                 comments.add(comment_text)  # Ajouter le commentaire à l'ensemble
+                time_set.add(time)
             else:
                 continue
         random_sleep()
 
-    return list(comments)  # On retourne la liste des commentaires
+    return list(comments), list(time_set)  # On retourne la liste des commentaires
 
 
 def scrap_tweets(tweet_elements, bot, search_url, mot_cle, nombre_tweets, nb_tweets, req_id, response_text, liste_tweets, utilisateurs): # Fonction pour récupérer les tweets et leurs informations
+    """
+    Récupère les tweets et leurs informations à partir des tweet elements
+
+    Parameters
+    ----------
+    tweet_elements : list
+        La liste des éléments de tweet récupérés avec BeautifulSoup
+    bot : webdriver
+        Le navigateur web
+    search_url : str
+        L'URL de la page de recherche
+    mot_cle : str
+        Le mot clé de la recherche
+    nombre_tweets : int
+        Le nombre de tweets récupérés
+    nb_tweets : int
+        Le nombre de tweets à récupérer
+    req_id : str
+        L'identifiant de la requête
+    response_text : str
+        Le texte de la réponse
+    liste_tweets : list
+        La liste des tweets
+    utilisateurs : list
+        La liste des utilisateurs
+    
+    Returns
+    -------
+    int, str, list(DonneeCollectee), list(str)
+        Le nombre de tweets, le texte de la réponse, la liste des tweets, la liste des utilisateurs
+    """
+    
     for tweet_element in  tweet_elements:
         #Extraction du texte du tweet
         tweet_div_text = tweet_element.find(attrs={'data-testid': 'tweetText'})
@@ -337,15 +418,15 @@ def get_tweets(request, mot_cle, until_date, since_date, nb_tweets): # Fonction 
         if scroll_count % 10 == 0:
             random_sleep()
             
-        print(f"Scroll count: {scroll_count}")
+        # print(f"Scroll count: {scroll_count}")
         scroll_count += 1  
 
     print(f"Nombre de tweets : {nombre_tweets}")
     
     # Récupérer les commentaires de chaque tweet et sauvegarder le tweet dans la base de données
     for tweet_instance, utilisateur in zip(liste_tweets, utilisateurs):
-        comments = get_comment_tweet(bot, utilisateur, tweet_instance.identifiant, search_url, tweet_instance.text_tweet)
-        tweet_instance.add_comment(comments)
+        comments, timelist = get_comment_tweet(bot, utilisateur, tweet_instance.identifiant, search_url, tweet_instance.text_tweet)
+        tweet_instance.add_comment(comments, timelist)
         save_tweets(tweet_instance)
 
     
