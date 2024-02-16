@@ -1,38 +1,88 @@
-.App {
-  text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+/* Styles pour le conteneur principal */
+.main-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  min-height: 100vh; /* Utilisation de min-height pour assurer que le conteneur s'étende au moins sur toute la hauteur de la page */
+  background-color: #6e54a3; /* Violet-bleu */
+  padding: 20px;
+  text-align: center;
+  width: 100vw; /* Largeur de 100vw pour remplir toute la largeur de la fenêtre visible */
 }
 
-.App-link {
-  color: #61dafb;
+
+/* Styles pour la barre de recherche de tweet */
+.search-tweet-bar {
+  margin-right: 100px; /* Marge à droite pour séparer les éléments */
+  margin-bottom: 50px; /* Ajout de marges pour séparer les éléments */
+  padding: 20px;
+  border-radius: 8px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.search-tweet-bar h2 {
+  font-size: 24px;
+  color: #333333;
+}
+
+/* Styles pour la barre de recherche de base */
+.search-req-bar {
+  margin-left: 100px; /* Marge à gauche pour séparer les éléments */
+  margin-bottom: 50px; /* Ajout de marge en bas */
+  padding: 20px;
+  border-radius: 8px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.search-req-bar h2 {
+  font-size: 24px;
+  color: #333333;
+}
+
+/* Styles pour les boutons personnalisés */
+.black-button {
+  background-color: black !important;
+  color: white !important;
+}
+
+
+/* Styles pour le conteneur des boutons */
+.buttons-container {
+  position: absolute;
+  top: 10px; /* Ajustez cette valeur selon votre préférence pour l'écart depuis le haut */
+  left: 10px; /* Ajustez cette valeur selon votre préférence pour l'écart depuis la droite */
+  
+}
+/* Styles pour les boutons Semantic UI React */
+.buttons-container .ui.button {
+  font-size: 18px; /* Ajustez la taille de la police selon vos préférences */
+  border-radius: 20px; /* Ajoutez des coins arrondis */
+  padding: 10px 20px; /* Ajoutez un peu de rembourrage pour les rendre plus grands */
+}
+/* Styles pour le titre */
+.title {
+  font-size: 32px; /* Taille de la police */
+  font-weight: bold; /* Gras */
+  color: #333333; /* Couleur du texte */
+  margin-top: 40px; /* Marge en haut */
+}
+
+
+.content {
+  display: flex; /* Utiliser Flexbox pour disposer les éléments enfants */
+}
+
+.left-bar,
+.right-bar {
+  flex: 1; /* Faire en sorte que les barres latérales occupent tout l'espace disponible */
+  padding: 20px; /* Ajouter un espace de remplissage pour les barres latérales */
+}
+
+.search-tweet-bar,
+.search-req-bar {
+  border: 1px solid #ccc; /* Ajouter une bordure pour délimiter visuellement les barres latérales */
+  padding: 20px; /* Ajouter un espace de remplissage pour les barres latérales */
+  margin-bottom: 50px; /* Ajouter un espace entre les barres latérales */
 }
