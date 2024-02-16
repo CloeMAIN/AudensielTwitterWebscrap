@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Installer les dépendances Python
 pip install -r /vercel/path0/AudensielScrap/requirements.txt
+
+# Installer Playwright
 python3 -m playwright install
-sudo apt update && sudo apt upgrade chromium-browser
