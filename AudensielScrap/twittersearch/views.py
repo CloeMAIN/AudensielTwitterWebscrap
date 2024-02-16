@@ -109,14 +109,14 @@ async def login(page):
 
 def save_tweets(tweets): # Fonction pour enregistrer les tweets dans la base de données
     element = tweets.to_dict()
-
     if tweet_collection.find_one({"identifiant": element["identifiant"]}): # Vérifier si l'élément existe déjà
         print("L'élément existe déjà")
         tweet_collection.update_one({"identifiant": element["identifiant"]},
                                      {"$set": {"nombre_views": element["nombre_views"],
                                                "nombre_likes": element["nombre_likes"],
                                                "nombre_reposts": element["nombre_reposts"],
-                                               "nombre_replies": element["nombre_replies"]
+                                               "nombre_replies": element["nombre_replies"],
+                                                  "comment_tweet": element["comment_tweet"],
                                                }
                                       }, upsert=False)
 
@@ -233,6 +233,8 @@ async def scrap_tweets(tweet_elements, mot_cle, nombre_tweets, nb_tweets, req_id
                 if nombre_tweets >= nb_tweets:
                     break
 
+                save_tweets(tweets_instance)  # Appel de la fonction save_tweets
+
     return nombre_tweets, response_text, liste_tweets, utilisateurs
 
 
@@ -253,7 +255,6 @@ async def get_tweet_url(tweet_instance, utilisateur):
             # Extraction des commentaires
             comments = await extract_comments(page, 10, tweet_instance.text_tweet)
             tweet_instance.comment_tweet = comments
-
             # Sauvegarde du tweet dans la base de données
             save_tweets(tweet_instance)
     except Exception as e:
@@ -311,7 +312,7 @@ async def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
 
             start_time_extraction = datetime.now() # Temps de début de l'extraction des tweets
 
-            while((nombre_tweets < nb_tweets) or (nb_tweets == 0)) :
+            while((nombre_tweets <= nb_tweets) or (nb_tweets == 0)) :
                 # Récupérer les éléments de tweet
                 html_content = await page.content()
                 # Utiliser BeautifulSoup pour analyser le contenu HTML
@@ -335,6 +336,10 @@ async def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
                 scroll_count += 1  
                 print(f"Scroll count: {scroll_count}")
 
+            # Imprimer le nombre final de tweets insérés dans la base de données
+            print(f"Nombre de tweets : {nombre_tweets}")
+
+
             end_time_extraction = datetime.now() # Temps de fin de l'extraction des tweets
 
             print(f"Temps d'extraction des tweets en minutes : {(end_time_extraction - start_time_extraction).seconds / 60}")
@@ -343,8 +348,9 @@ async def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
             start_time_comments = datetime.now() # Temps de début de l'exécution de la fonction pour calculer le temps d'exécution
 
             tasks = []  # Liste pour stocker les tâches asyncio
-            
+            compteur = 0
             for (tweet_instance, utilisateur) in zip(liste_tweets, utilisateurs):
+                compteur += 1
                 #seulement si le tweet a au moins un commentaire
                 if tweet_instance.nombre_replies > 0:
                     tasks.append(get_tweet_url(tweet_instance, utilisateur))
@@ -352,8 +358,13 @@ async def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
                     if len(tasks) == 15:
                         await asyncio.gather(*tasks)
                         tasks = []
+                    print(f"Le tweet {compteur} a des commentaires.")
+                else:
+                    print(f"Le tweet {compteur} n'a pas de commentaires.")
+                    
             if len(tasks) > 0:
                 await asyncio.gather(*tasks)
+               
 
             end_time_comments = datetime.now() # Temps de fin de l'extraction des commentaires
             print(f"Temps d'extraction des commentaires en minutes : {(end_time_comments - start_time_comments).seconds / 60}")
