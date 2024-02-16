@@ -1,20 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Table, Button, Dropdown } from 'semantic-ui-react'; // Import des composants Semantic UI React
 import { useTable, usePagination, useFilters } from 'react-table';
 
 function ReqTable() {
     const [data, setData] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     const fetchData = async () => {
         const response = await axios.get('http://localhost:8000/api/display_req');
         //const response = await axios.get('https://scrappertwitter.pythonanywhere.com/api/display_req');
         
         setData(response.data);
+        setLoading(false);
     };
 
     useEffect(() => {
         fetchData();
     }, []);
+
+    const rerunRequest = async (reqId) => {
+        try {
+            const response = await axios.get(`http://localhost:8000/api/display_req/${reqId}`);
+            const request = response.data;
+            const mot_cle = request.mot_cle;
+            const date_debut = request.date_debut;
+            const date_fin = request.date_fin;
+            const nb_tweets = request.nb_tweets;
+            await axios.get(`http://localhost:8000/api/search/${mot_cle}/${date_fin}/${date_debut}/${nb_tweets}`);
+            // Handle success or display a message
+            console.log('Request rerun successfully');
+        } catch (error) {
+            console.error('Error rerunning request:', error);
+        }
+    };
 
     const columns = React.useMemo(
         () => [
@@ -39,8 +58,11 @@ function ReqTable() {
                 accessor: 'nb_tweets',
             },
             {
-                Header: 'Last Date Pulled',
-                accessor: 'last_date_pulled',
+                Header: 'Actions',
+                accessor: 'actions',
+                Cell: ({ row }) => (
+                    <Button onClick={() => rerunRequest(row.original.req_id)}>Rerun</Button>
+                ),
             },
         ],
         []
@@ -55,7 +77,6 @@ function ReqTable() {
         canPreviousPage,
         canNextPage,
         pageOptions,
-        pageCount,
         gotoPage,
         nextPage,
         previousPage,
@@ -63,48 +84,49 @@ function ReqTable() {
         state: { pageIndex, pageSize },
     } = useTable({ columns, data }, useFilters, usePagination);
 
+    if (loading) return <div>Loading...</div>;
+
     return (
         <>
-            
-            <table {...getTableProps()}>
-                <thead>
+            <Table {...getTableProps()} celled>
+                <Table.Header>
                     {headerGroups.map(headerGroup => (
-                        <tr {...headerGroup.getHeaderGroupProps()}>
+                        <Table.Row {...headerGroup.getHeaderGroupProps()}>
                             {headerGroup.headers.map(column => (
-                                <th {...column.getHeaderProps()}>{column.render('Header')}</th>
+                                <Table.HeaderCell {...column.getHeaderProps()}>{column.render('Header')} </Table.HeaderCell>
                             ))}
-                        </tr>
+                        </Table.Row>
                     ))}
-                </thead>
-                <tbody {...getTableBodyProps()}>
+                </Table.Header>
+                <Table.Body {...getTableBodyProps()} style={{ width: '90%', height: '60vh', margin: '0 auto', overflowY: 'auto' }} >
                     {page.map(row => {
                         prepareRow(row);
                         return (
-                            <tr {...row.getRowProps()}>
+                            <Table.Row {...row.getRowProps()}>
                                 {row.cells.map(cell => (
-                                    <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
+                                    <Table.Cell {...cell.getCellProps()} >{cell.render('Cell')}</Table.Cell>
                                 ))}
-                            </tr>
+                            </Table.Row>
                         );
                     })}
-                </tbody>
-            </table>
+                </Table.Body>
+            </Table>
             <div>
-                <button onClick={() => previousPage()} disabled={!canPreviousPage}>
+                <Button onClick={() => previousPage()} disabled={!canPreviousPage}>
                     {'<'}
-                </button>
-                <button onClick={() => nextPage()} disabled={!canNextPage}>
+                </Button>
+                <Button onClick={() => nextPage()} disabled={!canNextPage}>
                     {'>'}
-                </button>
-                <button onClick={fetchData}>Charger les données</button>
+                </Button>
+                <Button onClick={fetchData}>Charger les données</Button>
                 <span>
                     Page{' '}
                     <strong>
-                        {pageIndex + 1} of {pageOptions.length}
+                        {pageIndex + 1} sur {pageOptions.length}
                     </strong>{' '}
                 </span>
                 <span>
-                    | Go to page:{' '}
+                    | Aller à la page:{' '}
                     <input
                         type="number"
                         defaultValue={pageIndex + 1}
@@ -115,19 +137,22 @@ function ReqTable() {
                         style={{ width: '100px' }}
                     />
                 </span>{' '}
-                <select
+                <Dropdown
+                    selection
+                    compact
                     value={pageSize}
-                    onChange={e => {
-                        setPageSize(Number(e.target.value));
+                    onChange={(e, { value }) => {
+                        setPageSize(Number(value));
                     }}
-                >
-                
-                    {[5,10, 20, 30, 40, 50].map(pageSize => (
-                        <option key={pageSize} value={pageSize}>
-                            Show {pageSize}
-                        </option>
-                    ))}
-                </select>
+                    options={[
+                        { key: 5, text: '5', value: 5 },
+                        { key: 10, text: '10', value: 10 },
+                        { key: 20, text: '20', value: 20 },
+                        { key: 30, text: '30', value: 30 },
+                        { key: 40, text: '40', value: 40 },
+                        { key: 50, text: '50', value: 50 },
+                    ]}
+                />
             </div>
         </>
     );
