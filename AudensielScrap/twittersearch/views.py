@@ -157,11 +157,11 @@ def save_tweets(tweets):
                                      {"$set": {"nombre_views": element["nombre_views"],
                                                "nombre_likes": element["nombre_likes"],
                                                "nombre_reposts": element["nombre_reposts"],
-                                               "nombre_replies": element["nombre_replies"], 
-                                                # A MODIFIER: ne pas écraser les tweets existants
-                                                "comment_tweet": element["comment_tweet"] # .insert(0, element["comment_tweet"]) # Ajouter les nouveaux commentaires à la liste des commentaires existants
-                                               }
-                                      }, upsert=False)
+                                               "nombre_replies": element["nombre_replies"]},
+                                      "$addToSet": {"comment_tweet": {"$each": element["comment_tweet"]}} # Ajouter les nouveaux commentaires à la liste des commentaires existants
+                                      },
+                                      upsert=False
+                                    )
 
     else: 
         print("L'élément n'existe pas")
