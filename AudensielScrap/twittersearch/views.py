@@ -25,7 +25,7 @@ USER_ID = config('USER_ID')
 USER_PASSWORD = config('USER_PASSWORD')
 proxies = open("./twittersearch/proxies.txt").read().splitlines() # Lire les proxies à partir du fichier proxies.txt pour ne pas être bloqué par Twitter
 
-os.environ['PLAYWRIGHT_BROWSERS_PATH'] = '/vercel/path0/AudensielScrap/.playwright'
+# os.environ['PLAYWRIGHT_BROWSERS_PATH'] = '/vercel/path0/AudensielScrap/.playwright'
 
 # Ensemble pour stocker les identifiants des tweets traités
 processed_tweets = set()
