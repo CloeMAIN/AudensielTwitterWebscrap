@@ -390,8 +390,9 @@ async def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
             start_time_comments = datetime.now() # Temps de début de l'exécution de la fonction pour calculer le temps d'exécution
 
             tasks = []  # Liste pour stocker les tâches asyncio
-            
+            compteur = 0
             for (tweet_instance, utilisateur) in zip(liste_tweets, utilisateurs):
+                compteur += 1
                 #seulement si le tweet a au moins un commentaire
                 if tweet_instance.nombre_replies > 0:
                     #tasks.append(get_tweet_url(tweet_instance, utilisateur))
@@ -401,6 +402,9 @@ async def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
                     if len(tasks) == 15:
                         await asyncio.gather(*tasks)
                         tasks = []
+                    print(f"Le tweet numéro {compteur} a des commentaires")
+                else :
+                    print(f"Le tweet numéro {compteur} n'a pas de commentaire")
             if len(tasks) > 0:
                 await asyncio.gather(*tasks)
 
