@@ -288,6 +288,8 @@ async def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
 
         start_time_total = datetime.now()
 
+        browser = None  # Définir browser en dehors du bloc try/except pour garantir son existence
+
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=False)
             page = await browser.new_page()
