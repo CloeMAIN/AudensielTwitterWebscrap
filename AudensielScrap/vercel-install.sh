@@ -4,4 +4,4 @@
 pip install -r /vercel/path0/AudensielScrap/requirements.txt
 
 # Installer Playwright
-python3 -m playwright install
+PLAYWRIGHT_BROWSERS_PATH=0 python -m playwright install
