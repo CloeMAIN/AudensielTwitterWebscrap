@@ -109,7 +109,7 @@ async def login(page):
     # Faire une pause aléatoire
     random_sleep()
 
-def save_tweets(tweets): # Fonction pour enregistrer les tweets dans la base de données
+def save_tweets(tweets,req_id): # Fonction pour enregistrer les tweets dans la base de données
     element = tweets.to_dict()
     if tweet_collection.find_one({"identifiant": element["identifiant"]}): # Vérifier si l'élément existe déjà
         print("L'élément existe déjà")
@@ -125,6 +125,8 @@ def save_tweets(tweets): # Fonction pour enregistrer les tweets dans la base de 
     else:
         print("L'élément n'existe pas")
         tweet_collection.insert_one(element)
+        req_collection.find_one({"req_id": req_id},
+                                {"$set":{"last_date_pulled":element["date_tweet"]}})
         
 def get_new_proxy():
     # Lire les proxies à partir du fichier proxies.txt et en choisir un aléatoire
@@ -235,7 +237,7 @@ async def scrap_tweets(tweet_elements, mot_cle, nombre_tweets, nb_tweets, req_id
                 if nombre_tweets >= nb_tweets:
                     break
 
-                save_tweets(tweets_instance)  # Appel de la fonction save_tweets
+                save_tweets(tweets_instance,req_id)  # Appel de la fonction save_tweets
 
     return nombre_tweets, response_text, liste_tweets, utilisateurs
 
