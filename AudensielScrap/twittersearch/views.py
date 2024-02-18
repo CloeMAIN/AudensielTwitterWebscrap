@@ -33,6 +33,21 @@ processed_tweets = set()
 #fonction pour faire une pause aléatoire
 def random_sleep():
     time.sleep(random.uniform(2, 5))
+
+import subprocess
+
+# Variable de statut pour garder une trace de l'installation de Playwright
+playwright_installed = False
+
+def install_playwright():
+    global playwright_installed
+    if not playwright_installed:
+        try:
+            subprocess.run(["python", "-m", "playwright", "install"], check=True)
+            playwright_installed = True
+        except subprocess.CalledProcessError as e:
+            print("Une erreur s'est produite lors de l'installation de Playwright :", e)
+
     
 class DonneeCollectee: # Classe pour stocker les données d'un tweet
     
@@ -272,6 +287,9 @@ import asyncio
 from playwright.async_api import async_playwright
 
 async def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
+    # Appeler la fonction pour installer Playwright
+    install_playwright()
+
     try:
         # Génère un identifiant unique basé sur la date et le temps pour retrouver les tweets scraper par une requête en particulier
         req_id = datetime.now().strftime("%Y%m%d%H%M")
