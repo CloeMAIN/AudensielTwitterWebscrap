@@ -13,7 +13,7 @@
     "functions": {
         "install-playwright": {
             "runtime": "python3.9",
-            "includeFiles": "path/to/install_playwright_script.py"
+            "includeFiles": "AudensielScrap/AudensielScrap/install_playwright_script.py"
           }
         },
     "alias": "optimisation-scraping"
