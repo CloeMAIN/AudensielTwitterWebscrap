@@ -246,7 +246,7 @@ async def scrap_tweets(tweet_elements, mot_cle, nombre_tweets, nb_tweets, req_id
 async def get_tweet_url(tweet_instance, utilisateur):
     try:
         async with async_playwright() as pw:
-            browser = await pw.chromium.launch(headless=False)
+            browser = await pw.chromium.launch(headless=True)
             context = await browser.new_context()
             page = await context.new_page()
 

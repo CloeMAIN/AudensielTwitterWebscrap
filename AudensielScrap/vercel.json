@@ -10,11 +10,5 @@
             "dest": "AudensielScrap/wsgi.py"
         }
     ],
-    "functions": {
-        "install-playwright": {
-            "runtime": "python3.9",
-            "includeFiles": "AudensielScrap/AudensielScrap/install_playwright_script.py"
-          }
-        },
     "alias": "optimisation-scraping"
 }
