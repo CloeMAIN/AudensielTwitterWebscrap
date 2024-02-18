@@ -16,6 +16,5 @@
             "memory": 1024,
             "includeFiles": "AudensielScrap/install_playwright_script.py"
         }
-    },
-    "alias": "optimisation-scraping"
+    }
 }
