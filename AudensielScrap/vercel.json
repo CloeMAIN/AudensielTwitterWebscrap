@@ -1,17 +1,17 @@
-{
-    "builds": [{
-        "src": "AudensielScrap/wsgi.py",
-        "use": "@vercel/python",
-        "config": { "maxLambdaSize": "15mb", "runtime": "python3.9" }
-    }],
-    "routes": [
-        {
-            "src": "/(.*)",
-            "dest": "AudensielScrap/wsgi.py"
-        }
-    ],
-    "github": {
-        "branch": "optimisation"
-      },
-    "alias": "optimisation-scraping"
-}
+// {
+//     "builds": [{
+//         "src": "AudensielScrap/wsgi.py",
+//         "use": "@vercel/python",
+//         "config": { "maxLambdaSize": "15mb", "runtime": "python3.9" }
+//     }],
+//     "routes": [
+//         {
+//             "src": "/(.*)",
+//             "dest": "AudensielScrap/wsgi.py"
+//         }
+//     ],
+//     "github": {
+//         "branch": "optimisation"
+//       },
+//     "alias": "optimisation-scraping"
+// }
