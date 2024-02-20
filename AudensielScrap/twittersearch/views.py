@@ -1,29 +1,38 @@
 from django.http import HttpResponse
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.action_chains import ActionChains
 from bs4 import BeautifulSoup
 import time
 import random
 from django.shortcuts import render
-from .models import tweet_collection,req_collection
-
-
+from .models import tweet_collection, req_collection
+from playwright.async_api import async_playwright
+import asyncio
 from datetime import datetime
 from django.http import JsonResponse
 from bson.json_util import dumps
-
+import aiohttp
 from decouple import config
+
+# Ajoutez cette variable pour compter les exceptions
+exception_counter = 0
+
 # Variables d'environnement pour stocker les identifiants Twitter
 USER_ID = config('USER_ID')
 USER_PASSWORD = config('USER_PASSWORD')
+proxies = open("./twittersearch/proxies.txt").read().splitlines() # Lire les proxies à partir du fichier proxies.txt pour ne pas être bloqué par Twitter
+
+# os.environ['PLAYWRIGHT_BROWSERS_PATH'] = '/vercel/path0/AudensielScrap/.playwright'
 
 # Ensemble pour stocker les identifiants des tweets traités
 processed_tweets = set()
 
+# fonction pour faire une pause aléatoire
+def random_sleep():
+    time.sleep(random.uniform(2, 5))
+
+
+class DonneeCollectee:  # Classe pour stocker les données d'un tweet
+    def __init__(self, text_tweet, nombre_likes, nombre_reposts, nombre_replies, nombre_views, date_tweet,
+                 identifiant_tweet, req_id, comment_tweet=None):
 
 def random_sleep():
     """
@@ -95,7 +104,7 @@ class DonneeCollectee: # Classe pour stocker les données d'un tweet
         self.comment_tweet = Commentaires() 
 
     # === PRIVATE METHODS === # 
-    def convert_number(self, value): # Convertir les nombres en entiers
+    def convert_number(self, value):  # Convertir les nombres en entiers # Convertir les nombres en entiers
         if value[-1] == "K":
             return int(float(value[:-1]) * 1000)
         elif value[-1] == "M":
@@ -103,12 +112,11 @@ class DonneeCollectee: # Classe pour stocker les données d'un tweet
         else:
             return int(value)
 
-    def add_comment(self,comment, timelist): # Ajouter un commentaire à la liste des commentaires
-        self.comment_tweet.add_comment(comment, timelist) 
-        # self.comment_tweet.append([comm, time] for comm, time in zip(comment, timelist))  
+    def add_comment(self, comment):  # Ajouter un commentaire à la liste des commentaires
+        self.comment_tweet.append(comment)
 
     # === PUBLIC METHODS === #
-    def to_dict(self): # Convertir l'objet en dictionnaire
+    def to_dict(self):  # Convertir l'objet en dictionnaire # Convertir l'objet en dictionnaire
         return {
             "text_tweet": self.text_tweet,
             "nombre_likes": self.nombre_likes,
@@ -121,37 +129,34 @@ class DonneeCollectee: # Classe pour stocker les données d'un tweet
             "req_id": self.req_id
         }
 
-def login(bot): # Fonction pour se connecter à Twitter
-    bot.get('https://twitter.com/i/flow/login')
 
-    USER_ID_input = WebDriverWait(bot, 5).until(
-        EC.presence_of_element_located((By.CLASS_NAME, 'r-1yadl64'))
-    )
-    USER_ID_input.send_keys(USER_ID)
+async def login(page):
+    await page.goto('https://twitter.com/i/flow/login')
 
-    button = bot.find_element(By.CSS_SELECTOR, 'div.css-175oi2r.r-1ny4l3l.r-6koalj.r-16y2uox div.css-175oi2r.r-16y2uox.r-1jgb5lz.r-13qz1uu div:nth-child(6)')
-    button.click() # Click the login button
+    # Attendre que l'élément d'entrée de l'identifiant de l'utilisateur soit visible
+    user_id_input = await page.wait_for_selector('.r-1yadl64', timeout=12000)
+    await user_id_input.fill(USER_ID)
 
-    password_input = WebDriverWait(bot, 5).until(
-        EC.presence_of_element_located((By.CSS_SELECTOR, 'div.css-175oi2r input[type="password"]')))
-    password_input.send_keys(USER_PASSWORD)
-    password_input.send_keys(Keys.RETURN)
+    # Cliquer sur le bouton de connexion
+    login_button = await page.wait_for_selector(
+        'div.css-175oi2r.r-1ny4l3l.r-6koalj.r-16y2uox div.css-175oi2r.r-16y2uox.r-1jgb5lz.r-13qz1uu div:nth-child(6)',
+        timeout=12000)
+    await login_button.click()
+
+    # Attendre que l'élément d'entrée du mot de passe soit visible
+    password_input = await page.wait_for_selector('div.css-175oi2r input[type="password"]', timeout=12000)
+    await password_input.fill(USER_PASSWORD)
+
+    # Appuyer sur la touche Entrée pour soumettre le formulaire
+    await page.keyboard.press("Enter")
+
+    # Faire une pause aléatoire
     random_sleep()
-    
 
-
-def save_tweets(tweets):
-    """
-    Enregistre les tweets dans la base de données. Si le tweet existe déjà, 
-    les commentaires sont ajoutés à la liste des commentaires existants et 
-    on met à jour les statistiques du tweet.
-    tweetcollection est la collection de la base de données MongoDB où les tweets sont stockés.
-
-    """
+def save_tweets(tweets,req_id): # Fonction pour enregistrer les tweets dans la base de données
     element = tweets.to_dict()
-    print(element)
-
-    if tweet_collection.find_one({"identifiant": element["identifiant"]}): # Vérifier si l'élément existe déjà
+    # print(element)
+    if tweet_collection.find_one({"identifiant": element["identifiant"]}):  # Vérifier si l'élément existe déjà # Vérifier si l'élément existe déjà
         print("L'élément existe déjà")
         tweet_collection.update_one({"identifiant": element["identifiant"]},
                                      {"$set": {"nombre_views": element["nombre_views"],
@@ -166,96 +171,80 @@ def save_tweets(tweets):
     else: 
         print("L'élément n'existe pas")
         tweet_collection.insert_one(element)
+        #req_collection.find_one({"req_id": req_id},
+                                #{"$set":{"last_date_pulled":element["date_tweet"]}})
+        
+def get_new_proxy():
+    # Lire les proxies à partir du fichier proxies.txt et en choisir un aléatoire
+    return random.choice(proxies)
 
 
-def perform_scroll(bot): # Fonction pour faire défiler la page
-    page_height = bot.execute_script("return document.body.scrollHeight")
-    bot.execute_script(f"window.scrollTo(0, {page_height/2});")
-    random_sleep()
-    bot.execute_script(f"window.scrollTo({page_height/2}, {page_height});")
-    random_sleep()
+def change_proxy(page, new_proxy):
+    # Changer le proxy ici
+    page.set_extra_http_headers({"Proxy-Authorization": new_proxy})
 
 
+async def perform_scroll(page):
+    # Faire défiler la page
+    await page.evaluate("window.scrollBy(0, window.innerHeight)")
 
-def get_comment_tweet(bot, utilisateur, identifiant, search_url, tweet_text): # Fonction récupérer les commentaires d'un tweet
-    """
-    Récupère les commentaires d'un tweet à partir de son identifiant
+    # Faire une pause aléatoire entre 2 et 5 secondes
+    await page.wait_for_timeout(random.randint(2000, 12000))
 
-    Parameters
-    ----------
-    bot : webdriver
-        Le navigateur web
-    utilisateur : str
-        Le nom de l'utilisateur
-    identifiant : str
-        L'identifiant du tweet
-    search_url : str
-        L'URL de la page de recherche
-    tweet_text : str
-        Le texte du tweet pour éviter de le scraper de nouveau
-    
-    Returns
-    -------
-    list, list
-        La liste des commentaires, la liste des dates de commentaires 
-    
-    """
+    # Attendre que de nouveaux éléments de tweet soient chargés
+    previous_last_tweet = (await page.query_selector_all('[data-testid="tweet"]'))[-1]
+    await page.evaluate("window.scrollBy(0, window.innerHeight)")
+    await page.wait_for_timeout(2000)  # Attendre un court instant
+    new_last_tweet = (await page.query_selector_all('[data-testid="tweet"]'))[-1]
 
+    if new_last_tweet != previous_last_tweet:
+        print("Au moins un nouveau tweet a été chargé.")
+        return True
+    else:
+        print("Aucun nouveau tweet n'a été chargé. Arrêt de l'extraction.")
+        return False
+
+
+async def fetch_comments(session, url):
+    async with session.get(url) as response:
+        return await response.text()
+
+
+async def get_comment_tweet(bot, utilisateur, identifiant, search_url, tweet_text):
     tweet_url = f'https://twitter.com/{utilisateur}/status/{identifiant}'
-    bot.get(tweet_url)
+    async with aiohttp.ClientSession() as session:
+        async with session.get(tweet_url) as response:
+            html_content = await response.text()
 
-    time.sleep(5)
+    # Votre logique d'extraction des commentaires ici
+    # comments = extract_comments(html_content, 10, tweet_text)
+    comments, timelist = extract_comments(html_content, 10, tweet_text) # On extrait les commentaires
 
-    scroll_position_before_click = bot.execute_script("return window.scrollY;") # On enregistre la position du scroll avant de cliquer sur le bouton "Afficher les commentaires"
-    
-    WebDriverWait(bot, 5).until(EC.presence_of_element_located((By.CSS_SELECTOR, '[data-testid="tweet"] [data-testid="tweetText"]')))
-    
-    comments, timelist = extract_comments(bot, 10, tweet_text) # On extrait les commentaires
     # print(f"Comments for tweet {identifiant}: {comments}")
 
-    bot.get(search_url) # On retourne à la page de recherche
+    bot.get(search_url)
     random_sleep()
     bot.execute_script(f"window.scrollTo(0, {scroll_position_before_click});")
     random_sleep()
-    return comments, timelist
+    return comments
 
-def extract_comments(bot, num_comments, tweet_text): # Fonction pour extraire les commentaires
-    """
-    Extrait les commentaires d'un tweet et parse les informations. Il est important de noter
-    que le webdriver doit déjà être sur la page du tweet pour que cette fonction fonctionne. 
 
-    Parameters
-    ----------
-    bot : webdriver
-        Le navigateur web
-    num_comments : int
-        Le nombre de commentaires à extraire
-    tweet_text : str
-        Le texte du tweet pour éviter de le scraper de nouveau 
-    
-    Returns
-    -------
-    list
-        La liste des commentaires 
-    
-    """
-    comments = set()  # On utilise un ensemble pour stocker les commentaires uniques
+async def extract_comments(page, num_comments, tweet_text):
+    comments = set()
     time_set = set()
-    # Défilement de la page pour charger les commentaires supplémentaires
-    for _ in range(num_comments // 5):  # 5 commentaires sont chargés à la fois
-        
-        page_height = bot.execute_script("return document.body.scrollHeight")
-        bot.execute_script(f"window.scrollTo(0, {page_height/2});")
-        soup = BeautifulSoup(bot.page_source, 'html.parser')
-        # save soup to file with random name for debugging
-        # with open(f'data/twitterComment{random.random()}.html', 'w', encoding='utf-8') as f:
-        #     # url for debugging
-        #     f.write(bot.current_url)
-        #     f.write(soup.prettify())
-        commententaires = soup.find_all(attrs={'data-testid': 'tweet'})
+
+
+    # Scroll down to load comments
+    for _ in range(num_comments // 5):
+        await page.evaluate("window.scrollBy(0, window.innerHeight)")
+        await asyncio.sleep(1)  # Wait for the comments to load
+
+        # Extract comments
+        soup = BeautifulSoup(await page.content(), 'html.parser')
+        comment_elements = soup.find_all(attrs={'data-testid': 'tweet'})
         time_elements = soup.find_all('time')
 
-        for comment, time in zip(commententaires, time_elements):
+        for comment, time in zip(comment_elements, time_elements):
             comment_text = comment.find(attrs={'data-testid': 'tweetText'})
             time = time['datetime'][0:10]
             if comment_text is not None and comment_text.get_text(strip=True) != tweet_text: # On vérifie que le commentaire n'est pas le même que le tweet
@@ -264,174 +253,185 @@ def extract_comments(bot, num_comments, tweet_text): # Fonction pour extraire le
                 time_set.add(time)
             else:
                 continue
-        random_sleep()
+        await asyncio.sleep(1)  # Add a short delay before scrolling again
 
-    return list(comments), list(time_set)  # On retourne la liste des commentaires
+    return list(comments), list(time_set)
 
 
-def scrap_tweets(tweet_elements, bot, search_url, mot_cle, nombre_tweets, nb_tweets, req_id, response_text, liste_tweets, utilisateurs): # Fonction pour récupérer les tweets et leurs informations
-    """
-    Récupère les tweets et leurs informations à partir des tweet elements
-
-    Parameters
-    ----------
-    tweet_elements : list
-        La liste des éléments de tweet récupérés avec BeautifulSoup
-    bot : webdriver
-        Le navigateur web
-    search_url : str
-        L'URL de la page de recherche
-    mot_cle : str
-        Le mot clé de la recherche
-    nombre_tweets : int
-        Le nombre de tweets récupérés
-    nb_tweets : int
-        Le nombre de tweets à récupérer
-    req_id : str
-        L'identifiant de la requête
-    response_text : str
-        Le texte de la réponse
-    liste_tweets : list
-        La liste des tweets
-    utilisateurs : list
-        La liste des utilisateurs
-    
-    Returns
-    -------
-    int, str, list(DonneeCollectee), list(str)
-        Le nombre de tweets, le texte de la réponse, la liste des tweets, la liste des utilisateurs
-    """
-    
-    for tweet_element in  tweet_elements:
-        #Extraction du texte du tweet
+async def scrap_tweets(tweet_elements, mot_cle, nombre_tweets, nb_tweets, req_id, response_text, liste_tweets,
+                       utilisateurs):
+    for tweet_element in tweet_elements:
         tweet_div_text = tweet_element.find(attrs={'data-testid': 'tweetText'})
         if tweet_div_text is not None:
-            tweet_text = tweet_div_text.get_text(strip= False)
+            tweet_text = tweet_div_text.get_text(strip=False)
         else:
             continue
 
-        #Extraction du nombre de likes, reposts, replies et vues du tweet
         details = tweet_element.find_all(attrs={'data-testid': 'app-text-transition-container'})
         replies = details[0].get_text(strip=True)
         reposts = details[1].get_text(strip=True)
         likes = details[2].get_text(strip=True)
-
-        #S'assurer qu'il y a 4 éléments dans détails avant d'accéder à details[3] (parfois, le nombre de vus n'est pas inclus dans la liste
         views = details[3].get_text(strip=True) if len(details) >= 4 else ""
 
-        #Extraction de la date d'émission du Tweet
         user_info = tweet_element.find(attrs={'data-testid': 'User-Name'})
         user_info2 = user_info.find_all('a', href=True)
         user_info = user_info.find('time')
         date = user_info['datetime'][0:10]
 
-        #Extrait l'identifiant du tweet et l'utilisateur pour pouvoir récupérer les commentaires dans la suite le nom de l'utilisateur n'est pas conservé
         user_info2 = user_info2[2]['href']
         url_segments = user_info2.split("/")
         identifiant = url_segments[3]
         utilisateur = url_segments[1]
 
-        if (mot_cle in tweet_text) and(nombre_tweets <= nb_tweets) and (identifiant not in processed_tweets):
+        if (mot_cle in tweet_text) and (nombre_tweets < nb_tweets) and (identifiant not in processed_tweets):
             if not tweet_collection.find_one({"identifiant": identifiant}):
-                    tweets_instance = DonneeCollectee(tweet_text, likes, reposts, replies, views, date, identifiant, req_id, [])
-                    # Ajouter l'instance de tweet à la liste de tweets
-                    liste_tweets.append(tweets_instance)
-                    utilisateurs.append(utilisateur)
-                    nombre_tweets += 1
-                    response_text += f"\n{identifiant}"
-                    processed_tweets.add(identifiant)  # Ajouter l'identifiant du tweet traité à l'ensemble
-                    #print (f"Nombre de tweets : {nombre_tweets}")
+                tweets_instance = DonneeCollectee(tweet_text, likes, reposts, replies, views, date, identifiant,
+                                                   req_id, [])
+                liste_tweets.append(tweets_instance)
+                utilisateurs.append(utilisateur)
+                nombre_tweets += 1
+                response_text += f"\n{identifiant}"
+                processed_tweets.add(identifiant)
+                print(f"Nombre de tweets : {nombre_tweets}")
+                if nombre_tweets >= nb_tweets:
+                    break
 
     return nombre_tweets, response_text, liste_tweets, utilisateurs
 
 
+async def get_tweet_url(tweet_instance, utilisateur):
+    global exception_counter  # Utilisez la variable globale exception_counter
+    try:
+        async with async_playwright() as pw:
+            browser = await pw.chromium.launch(headless=True)
+            context = await browser.new_context()
+            page = await context.new_page()
 
-def get_tweets(request, mot_cle, until_date, since_date, nb_tweets): # Fonction pour récupérer les tweets
-    #Génère un identifiant unique basé sur la date et le temps pour retrouvé les tweets scraper par une requête en particulier
-    req_id = datetime.now().strftime("%Y%m%d%H%M")
+            await login(page)  # Assurez-vous d'attendre que la connexion se termine
 
-    # Enregistre la requête dans la base de données
-    req_doc = {
-        "req_id": req_id,
-        "mot_cle": mot_cle,
-        "date_fin": until_date,
-        "date_debut": since_date,
-        "nb_tweets": nb_tweets,
-        "last_date_pulled": ""
-    }
+            await page.goto(f'https://twitter.com/{utilisateur}/status/{tweet_instance.identifiant}')
 
-    req_collection.insert_one(req_doc)
-    global processed_tweets  # Utiliser l'ensemble global
-    proxies = open("./twittersearch/proxies.txt").read().splitlines() # Lire les proxies à partir du fichier proxies.txt pour ne pas être bloqué par Twitter
-    # Initialiser le navigateur
-    options = webdriver.ChromeOptions()
-    # options.add_argument("--headless")  #Pour lancer en arrière plan
-    options.add_argument("--enable-javascript")
-    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.3")
-    options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_experimental_option("excludeSwitches", ["enable-automation"])
-    options.add_experimental_option("useAutomationExtension", False)
+            await asyncio.sleep(3)  # Attendre 3 secondes pour que la page se charge complètement
 
-    bot = webdriver.Chrome(options=options)
+            # Extraction des commentaires
+            comments = await extract_comments(page, 10, tweet_instance.text_tweet)
+            tweet_instance.comment_tweet = comments
+            # Sauvegarde du tweet dans la base de données
+    except Exception as e:
+        print(f"Une exception s'est produite lors de la récupération des données pour le tweet {tweet_instance.identifiant}: {e}")
+        exception_counter += 1  # Incrémentez le compteur d'exceptions
+    finally:
+        if browser:
+            await browser.close()  # Assurez-vous que le navigateur est fermé même en cas d'exception
 
-    useragentarray = [
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36",
-    ]
 
-    bot.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+async def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
+    try:
+        # Génère un identifiant unique basé sur la date et le temps pour retrouver les tweets scraper par une requête en particulier
+        req_id = datetime.now().strftime("%Y%m%d%H%M")
 
-    login(bot) # Se connecter à Twitter
+        # Enregistre la requête dans la base de données
+        req_doc = {
+            "req_id": req_id,
+            "mot_cle": mot_cle,
+            "date_fin": until_date,
+            "date_debut": since_date,
+            "nb_tweets": nb_tweets,
+            "last_date_pulled": ""
+        }
 
-    # Recherche du mot clé
-    search_url = f'https://twitter.com/search?q={mot_cle}%20until%3A{until_date}%20since%3A{since_date}&src=typed_query&f=live'
-    bot.get(search_url)
+        req_collection.insert_one(req_doc)
 
-    # Attendre que la page se charge
-    time.sleep(5)
+        start_time_total = datetime.now()
 
-    max_scrolls = 20
-    scroll_count = 0
-    nombre_tweets = 0
-    liste_tweets = []
-    utilisateurs = []
+        browser = None  # Définir browser en dehors du bloc try/except pour garantir son existence
 
-    while nombre_tweets <= nb_tweets :
-        
-        soup = BeautifulSoup(bot.page_source, 'html.parser')
-        tweet_elements = soup.find_all(attrs={'data-testid': 'tweet'}) # On récupère les tweets
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=False)
+            page = await browser.new_page()
 
-        response_text = ""
+            # Se connecter à Twitter
+            await login(page)
 
-        #Appel de la fonction qui permet de récupérer les tweets et toutes leurs informations. 
-        nombre_tweets, response_text, liste_tweets, utilisateurs = scrap_tweets(tweet_elements, bot, search_url, mot_cle, nombre_tweets, nb_tweets, req_id, response_text, liste_tweets, utilisateurs)
-                
-        useragent = random.choice(useragentarray)
-        bot.execute_cdp_cmd("Network.setUserAgentOverride", {"userAgent": useragent}) # Changer l'user agent pour éviter d'être bloqué par Twitter
+            # Recherche du mot clé
+            search_url = f'https://twitter.com/search?q={mot_cle}%20until%3A{until_date}%20since%3A{since_date}&src=typed_query&f=live'
+            await page.goto(search_url)
 
-        if scroll_count % 5 == 0:
-            options.add_argument("--proxy-server=%s" % proxies[scroll_count % 5])
-        perform_scroll(bot)
+            # Attendre que la page se charge
+            await asyncio.sleep(5)
 
-        random_sleep()
+            max_scrolls = 20
+            scroll_count = 0
+            nombre_tweets = 0
+            liste_tweets = []
+            utilisateurs = []
 
-        if scroll_count % 10 == 0:
-            random_sleep()
-            
-        # print(f"Scroll count: {scroll_count}")
-        scroll_count += 1  
+            start_time_extraction = datetime.now()  # Temps de début de l'extraction des tweets
 
-    print(f"Nombre de tweets : {nombre_tweets}")
-    
-    # Récupérer les commentaires de chaque tweet et sauvegarder le tweet dans la base de données
-    for tweet_instance, utilisateur in zip(liste_tweets, utilisateurs):
-        comments, timelist = get_comment_tweet(bot, utilisateur, tweet_instance.identifiant, search_url, tweet_instance.text_tweet)
-        tweet_instance.add_comment(comments, timelist)
-        save_tweets(tweet_instance)
+            while ((nombre_tweets <= nb_tweets) or (nb_tweets == 0)):
+                # Récupérer les éléments de tweet
+                html_content = await page.content()
+                # Utiliser BeautifulSoup pour analyser le contenu HTML
+                soup = BeautifulSoup(html_content, 'html.parser')
+                # Ensuite, pour trouver les éléments de tweet, vous pouvez utiliser le sélecteur CSS correspondant :
+                tweet_elements = soup.select('[data-testid="tweet"]')
 
-    
+                response_text = ""
 
-    print(f"Nombre de tweets : {nombre_tweets}")
+                # Appel de la fonction qui permet de récupérer les tweets et toutes leurs informations
+                nombre_tweets, response_text, liste_tweets, utilisateurs = await scrap_tweets(tweet_elements, mot_cle,
+                                                                                             nombre_tweets, nb_tweets,
+                                                                                             req_id, response_text,
+                                                                                             liste_tweets, utilisateurs)
+
+                # Faire défiler la page
+                if not await perform_scroll(page):
+                    break  # Sortir de la boucle si aucun nouveau tweet est chargé
+                if nombre_tweets >= nb_tweets:
+                    print("Le nombre de tweets souhaité a été atteint.")
+                    break
+                random_sleep()
+
+                scroll_count += 1
+                print(f"Scroll count: {scroll_count}")
+
+            # Imprimer le nombre final de tweets insérés dans la base de données
+            print(f"Nombre de tweets : {nombre_tweets}")
+
+            end_time_extraction = datetime.now()  # Temps de fin de l'extraction des tweets
+
+            print(f"Temps d'extraction des tweets en minutes : {(end_time_extraction - start_time_extraction).seconds / 60}")
+
+            # Récupérer les commentaires de chaque tweet et sauvegarder le tweet dans la base de données
+            start_time_comments = datetime.now()  # Temps de début de l'exécution de la fonction pour calculer le temps d'exécution
+
+            tasks = []  # Liste pour stocker les tâches asyncio
+            compteur = 0
+            for (tweet_instance, utilisateur) in zip(liste_tweets, utilisateurs):
+                compteur += 1
+                # seulement si le tweet a au moins un commentaire
+                if tweet_instance.nombre_replies > 0:
+                    tasks.append(get_tweet_url(tweet_instance, utilisateur))
+                    # je veux quon exécute nb_tweets bots en parallèle
+                    if len(tasks) == 10:
+                        await asyncio.gather(*tasks)
+                        tasks = []
+                    print(f"Le tweet {compteur} a des commentaires.")
+                else:
+                    print(f"Le tweet {compteur} n'a pas de commentaires.")
+
+            if len(tasks) > 0:
+                await asyncio.gather(*tasks)
+
+            # sauvegarde des tweets dans la base de données
+            for tweet_instance in liste_tweets:
+                save_tweets(tweet_instance,req_id)  # Appel de la fonction save_tweets
+            end_time_comments = datetime.now()  # Temps de fin de l'extraction des commentaires
+            print(f"Temps d'extraction des commentaires en minutes : {(end_time_comments - start_time_comments).seconds / 60}")
+
+            end_time_total = datetime.now()  # Temps de fin de l'exécution de la fonction pour calculer le temps d'exécution
+            print(f"Temps d'exécution total en minutes : {(end_time_total - start_time_total).seconds / 60}")
+            print(f"Nombre de tweets : {nombre_tweets}")
 
     bot.quit()
 
@@ -441,21 +441,30 @@ def get_tweets(request, mot_cle, until_date, since_date, nb_tweets): # Fonction 
     return HttpResponse(response_text, content_type='text/plain')
 
 
-
 from bson import json_util 
 import json
 
-def get_all_tweet(request): # Fonction pour récupérer tous les tweets
+
+def get_all_tweet(request):  # Fonction pour récupérer tous les tweets
     tweets = tweet_collection.find()
     tweet_data = [json.loads(json_util.dumps(tweet)) for tweet in tweets]
     return JsonResponse(tweet_data, safe=False)
 
-def get_tweet_by_reqid(request, req_id): # Fonction pour récupérer les tweets d'une requête
+
+def get_tweet_by_reqid(request, req_id):  # Fonction pour récupérer les tweets d'une requête
     tweets = tweet_collection.find({"req_id": req_id})
     tweet_data = [json.loads(json_util.dumps(tweet)) for tweet in tweets]
     return JsonResponse(tweet_data, safe=False)
 
-def get_all_req(request): # Fonction pour récupérer toutes les requêtes
+
+def get_all_req(request):  # Fonction pour récupérer toutes les requêtes # Fonction pour récupérer toutes les requêtes
     reqs = req_collection.find()
     req_data = [json.loads(json_util.dumps(req)) for req in reqs]
+    return JsonResponse(req_data, safe=False)
+
+
+# fonction pour récupérer une requête par son id
+def get_req_by_id(request, req_id):
+    req = req_collection.find_one({"req_id": req_id})
+    req_data = json.loads(json_util.dumps(req))
     return JsonResponse(req_data, safe=False)
