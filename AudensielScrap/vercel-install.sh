@@ -4,4 +4,7 @@
 pip install -r /vercel/path0/AudensielScrap/requirements.txt
 
 # Installer Playwright
-python -m playwright install
+playwright install
+
+#Installer dépendances 
+playwright install-deps
