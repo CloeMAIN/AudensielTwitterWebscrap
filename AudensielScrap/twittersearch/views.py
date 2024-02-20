@@ -18,7 +18,9 @@ exception_counter = 0
 # Variables d'environnement pour stocker les identifiants Twitter
 USER_ID = config('USER_ID')
 USER_PASSWORD = config('USER_PASSWORD')
-proxies = open("./twittersearch/proxies.txt").read().splitlines()  # Lire les proxies à partir du fichier proxies.txt pour ne pas être bloqué par Twitter
+proxies = open("./twittersearch/proxies.txt").read().splitlines() # Lire les proxies à partir du fichier proxies.txt pour ne pas être bloqué par Twitter
+
+# os.environ['PLAYWRIGHT_BROWSERS_PATH'] = '/vercel/path0/AudensielScrap/.playwright'
 
 # Ensemble pour stocker les identifiants des tweets traités
 processed_tweets = set()
@@ -105,25 +107,25 @@ async def login(page):
     # Faire une pause aléatoire
     random_sleep()
 
-
-def save_tweets(tweets):  # Fonction pour enregistrer les tweets dans la base de données
+def save_tweets(tweets,req_id): # Fonction pour enregistrer les tweets dans la base de données
     element = tweets.to_dict()
     if tweet_collection.find_one({"identifiant": element["identifiant"]}):  # Vérifier si l'élément existe déjà
         print("L'élément existe déjà")
         tweet_collection.update_one({"identifiant": element["identifiant"]},
-                                     {"$set": {"nombre_views": element["nombre_views"],
-                                               "nombre_likes": element["nombre_likes"],
-                                               "nombre_reposts": element["nombre_reposts"],
-                                               "nombre_replies": element["nombre_replies"],
-                                               "comment_tweet": element["comment_tweet"],
-                                               }
-                                      }, upsert=False)
+                                    {"$set": {"nombre_views": element["nombre_views"],
+                                            "nombre_likes": element["nombre_likes"],
+                                            "nombre_reposts": element["nombre_reposts"],
+                                            "nombre_replies": element["nombre_replies"],
+                                            "comment_tweet": element["comment_tweet"],
+                                            }
+                                    }, upsert=False)
 
     else:
         print("L'élément n'existe pas")
         tweet_collection.insert_one(element)
-
-
+        #req_collection.find_one({"req_id": req_id},
+                                #{"$set":{"last_date_pulled":element["date_tweet"]}})
+        
 def get_new_proxy():
     # Lire les proxies à partir du fichier proxies.txt et en choisir un aléatoire
     return random.choice(proxies)
@@ -243,7 +245,7 @@ async def get_tweet_url(tweet_instance, utilisateur):
     global exception_counter  # Utilisez la variable globale exception_counter
     try:
         async with async_playwright() as pw:
-            browser = await pw.chromium.launch(headless=False)
+            browser = await pw.chromium.launch(headless=True)
             context = await browser.new_context()
             page = await context.new_page()
 
@@ -365,7 +367,7 @@ async def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
 
             # sauvegarde des tweets dans la base de données
             for tweet_instance in liste_tweets:
-                save_tweets(tweet_instance)
+                save_tweets(tweet_instance,req_id)  # Appel de la fonction save_tweets
             end_time_comments = datetime.now()  # Temps de fin de l'extraction des commentaires
             print(f"Temps d'extraction des commentaires en minutes : {(end_time_comments - start_time_comments).seconds / 60}")
 

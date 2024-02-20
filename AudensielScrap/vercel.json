@@ -10,8 +10,5 @@
             "dest": "AudensielScrap/wsgi.py"
         }
     ],
-    "github": {
-        "branch": "optimisation"
-      },
     "alias": "optimisation-scraping"
 }
