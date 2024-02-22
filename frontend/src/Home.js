@@ -25,7 +25,7 @@ function Home() {
           Vous pouvez effectuer des recherches par mots-clés, par dates, etc.
         </p>
         {/* Bouton start qui, si on appuie dessus, change l'interface avec App */}
-        <Button primary size='large' className="start-button" onClick={handleStartClick}>
+        <Button primary size='large' className="start-button" onClick={handleStartClick} style={{ backgroundColor: '#b63a3a' }}>  
           <Icon name='play' />
           Commencer
         </Button>

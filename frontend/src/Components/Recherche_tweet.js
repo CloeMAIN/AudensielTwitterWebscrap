@@ -50,7 +50,7 @@ function SearchDateRange({ beginDate, setBeginDate, endDate, setEndDate, numberT
 
 function SubmitButtonId({ handleSubmit, isLoading }) {
     return (
-        <Button loading={isLoading} primary icon labelPosition='left' type="submit">
+        <Button loading={isLoading} primary icon labelPosition='left' type="submit" style={{ backgroundColor: '#b63a3a' }}>
             <Icon name='search' />
             Rechercher
         </Button>
@@ -59,7 +59,7 @@ function SubmitButtonId({ handleSubmit, isLoading }) {
 
 function SubmitButtonKeyword({ handleSubmit, isLoading }) {
     return (
-        <Button loading={isLoading} primary icon labelPosition='left' type="submit">
+        <Button loading={isLoading} primary icon labelPosition='left' type="submit" style={{ backgroundColor: '#b63a3a' }}>
             <Icon name='search' />
             Rechercher
         </Button>

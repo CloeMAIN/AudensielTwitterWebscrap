@@ -2,7 +2,7 @@ import 'chart.js/auto';
 import 'chartjs-adapter-date-fns'; // Importez le module de l'adaptateur pour utiliser date-fns avec Chart.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Line } from 'react-chartjs-2'; // Importer le composant de graphique en courbes
+import { Bar, Line } from 'react-chartjs-2'; // Importer le composant de graphique en courbes
 
 function VisualisationTweets() {
     const [requestsData, setRequestsData] = useState([]);
@@ -37,8 +37,8 @@ function VisualisationTweets() {
             {
                 label: 'Nombre de Tweets',
                 data: requestData.map(request => request.nbtweets),
-                backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'red',
+                borderColor: 'black',
                 borderWidth: 1,
             },
         ],
@@ -61,10 +61,10 @@ function VisualisationTweets() {
     };
 
     return (
-        <div style={{ width: '800px', height: '400px' }}> {/* Ajoutez des styles pour la taille du graphe */}
+        <div style={{ width: '1100px', height: '600px' }}> {/* Ajoutez des styles pour la taille du graphe */}
             <h2>Visualisation du nombre de Tweets par requête</h2>
             {/* Utilisez le composant de graphique en courbes (Line) au lieu de Bar */}
-            <Line data={data} options={options} />
+            <Bar data={data} options={options} />
         </div>
     );
 }

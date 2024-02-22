@@ -11,15 +11,16 @@ from django.http import JsonResponse
 from bson.json_util import dumps
 import aiohttp
 from decouple import config
-import sys
-import traceback
+
 # Ajoutez cette variable pour compter les exceptions
 exception_counter = 0
 
 # Variables d'environnement pour stocker les identifiants Twitter
 USER_ID = config('USER_ID')
 USER_PASSWORD = config('USER_PASSWORD')
-proxies = open("./twittersearch/proxies.txt").read().splitlines()  # Lire les proxies à partir du fichier proxies.txt pour ne pas être bloqué par Twitter
+proxies = open("./twittersearch/proxies.txt").read().splitlines() # Lire les proxies à partir du fichier proxies.txt pour ne pas être bloqué par Twitter
+
+# os.environ['PLAYWRIGHT_BROWSERS_PATH'] = '/vercel/path0/AudensielScrap/.playwright'
 
 # Ensemble pour stocker les identifiants des tweets traités
 processed_tweets = set()
@@ -91,9 +92,10 @@ class DonneeCollectee: # Classe pour stocker les données d'un tweet
         else:
             self.nombre_views = self.convert_number(nombre_views)
 
-        self.comment_tweet = comment_tweet if comment_tweet is not None else []
+        self.comment_tweet = Commentaires() 
 
-    def convert_number(self, value):  # Convertir les nombres en entiers
+    # === PRIVATE METHODS === # 
+    def convert_number(self, value):  # Convertir les nombres en entiers # Convertir les nombres en entiers
         if value[-1] == "K":
             return int(float(value[:-1]) * 1000)
         elif value[-1] == "M":
@@ -104,7 +106,8 @@ class DonneeCollectee: # Classe pour stocker les données d'un tweet
     def add_comment(self, comment):  # Ajouter un commentaire à la liste des commentaires
         self.comment_tweet.append(comment)
 
-    def to_dict(self):  # Convertir l'objet en dictionnaire
+    # === PUBLIC METHODS === #
+    def to_dict(self):  # Convertir l'objet en dictionnaire # Convertir l'objet en dictionnaire
         return {
             "text_tweet": self.text_tweet,
             "nombre_likes": self.nombre_likes,
@@ -113,7 +116,7 @@ class DonneeCollectee: # Classe pour stocker les données d'un tweet
             "nombre_views": self.nombre_views,
             "date_tweet": self.date_tweet,
             "identifiant": self.identifiant,
-            "comment_tweet": self.comment_tweet,
+            "comment_tweet": self.comment_tweet.to_dict(),
             "req_id": self.req_id
         }
 
@@ -141,21 +144,22 @@ async def login(page):
     # Faire une pause aléatoire
     random_sleep()
 
-
-def save_tweets(tweets):  # Fonction pour enregistrer les tweets dans la base de données
+def save_tweets(tweets,req_id): # Fonction pour enregistrer les tweets dans la base de données
     element = tweets.to_dict()
-    if tweet_collection.find_one({"identifiant": element["identifiant"]}):  # Vérifier si l'élément existe déjà
+    # print(element)
+    if tweet_collection.find_one({"identifiant": element["identifiant"]}):  # Vérifier si l'élément existe déjà # Vérifier si l'élément existe déjà
         print("L'élément existe déjà")
         tweet_collection.update_one({"identifiant": element["identifiant"]},
                                      {"$set": {"nombre_views": element["nombre_views"],
                                                "nombre_likes": element["nombre_likes"],
                                                "nombre_reposts": element["nombre_reposts"],
-                                               "nombre_replies": element["nombre_replies"],
-                                               "comment_tweet": element["comment_tweet"],
-                                               }
-                                      }, upsert=False)
+                                               "nombre_replies": element["nombre_replies"]},
+                                      "$addToSet": {"comment_tweet": {"$each": element["comment_tweet"]}} # Ajouter les nouveaux commentaires à la liste des commentaires existants
+                                      },
+                                      upsert=False
+                                    )
 
-    else:
+    else: 
         print("L'élément n'existe pas")
         tweet_collection.insert_one(element)
         req_collection.update_one({"req_id": req_id},
@@ -213,40 +217,43 @@ async def get_comment_tweet(bot, utilisateur, identifiant, search_url, tweet_tex
 
 async def extract_comments(page, num_comments, tweet_text):
     comments = set()
+    time_set = set()
 
+    print("test comm")
     # Scroll down to load comments
     for _ in range(num_comments // 5):
-        await page.evaluate("window.scrollBy(0, window.innerHeight)")
-        await asyncio.sleep(1)  # Wait for the comments to load
+        try : 
+            await page.evaluate("window.scrollBy(0, window.innerHeight)")
+            await asyncio.sleep(1)  # Wait for the comments to load
 
-        # Extract comments
-        soup = BeautifulSoup(await page.content(), 'html.parser')
-        comment_elements = soup.find_all(attrs={'data-testid': 'tweet'})
+            # Extract comments
+            soup = BeautifulSoup(await page.content(), 'html.parser')
+            comment_elements = soup.find_all(attrs={'data-testid': 'tweet'})
+            time_elements = soup.find_all('time')
 
-        for comment in comment_elements:
-            comment_text = comment.find(attrs={'data-testid': 'tweetText'})
-            if comment_text is not None and comment_text.get_text(strip=True) != tweet_text:
-                comment_text = comment_text.get_text(strip=True)
-                comments.add(comment_text)
-            else:
-                continue
-        await asyncio.sleep(1)  # Add a short delay before scrolling again
-
-    return list(comments)
+            for comment, time in zip(comment_elements, time_elements):
+                comment_text = comment.find(attrs={'data-testid': 'tweetText'})
+                time = time['datetime'][0:10]
+                if comment_text is not None and comment_text.get_text(strip=True) != tweet_text: # On vérifie que le commentaire n'est pas le même que le tweet
+                    comment_text = comment_text.get_text(strip=True)
+                    comments.add(comment_text)  # Ajouter le commentaire à l'ensemble
+                    time_set.add(time)
+                else:
+                    continue
+            await asyncio.sleep(1)  # Add a short delay before scrolling again
+        except Exception as e:
+            print(f"Une exception s'est produite lors de la récupération des commentaires")
+    return list(comments), list(time_set)
 
 
 async def scrap_tweets(tweet_elements, mot_cle, nombre_tweets, nb_tweets, req_id, response_text, liste_tweets,
                        utilisateurs):
-    
-    
     for tweet_element in tweet_elements:
         tweet_div_text = tweet_element.find(attrs={'data-testid': 'tweetText'})
         if tweet_div_text is not None:
             tweet_text = tweet_div_text.get_text(strip=False)
-            
         else:
             continue
-    
 
         details = tweet_element.find_all(attrs={'data-testid': 'app-text-transition-container'})
         replies = details[0].get_text(strip=True)
@@ -254,21 +261,19 @@ async def scrap_tweets(tweet_elements, mot_cle, nombre_tweets, nb_tweets, req_id
         likes = details[2].get_text(strip=True)
         views = details[3].get_text(strip=True) if len(details) >= 4 else ""
 
-        user_info = tweet_element.find(attrs={'data-testid': 'User-Name'})
-        if user_info is None:
-            print("user_info is the prob 264")
-        user_info2 = user_info.find_all('a', href=True)
-        user_info = user_info.find('time')
-        date = user_info['datetime'][0:10]
 
-        user_info2 = user_info2[2]['href']
-        url_segments = user_info2.split("/")
-        identifiant = url_segments[3]
-        utilisateur = url_segments[1]
-
-        if (mot_cle in tweet_text) and (nombre_tweets < nb_tweets) and (identifiant not in processed_tweets):
-            if not tweet_collection.find_one({"identifiant": identifiant}):
-                tweets_instance = DonneeCollectee(tweet_text, likes, reposts, replies, views, date, identifiant,
+        if (mot_cle in tweet_text) and (nombre_tweets < nb_tweets) :
+            user_info = tweet_element.find(attrs={'data-testid': 'User-Name'})
+            user_info2 = user_info.find_all('a', href=True)
+            user_info = user_info.find('time')
+            date = user_info['datetime'][0:10]
+            user_info2 = user_info2[2]['href']
+            url_segments = user_info2.split("/")
+            identifiant = url_segments[3]
+            utilisateur = url_segments[1]
+            if (identifiant not in processed_tweets):
+                if not tweet_collection.find_one({"identifiant": identifiant}):
+                    tweets_instance = DonneeCollectee(tweet_text, likes, reposts, replies, views, date, identifiant,
                                                    req_id, [])
                     liste_tweets.append(tweets_instance)
                     utilisateurs.append(utilisateur)
@@ -286,7 +291,7 @@ async def get_tweet_url(tweet_instance, utilisateur):
     global exception_counter  # Utilisez la variable globale exception_counter
     try:
         async with async_playwright() as pw:
-            browser = await pw.chromium.launch(headless=False)
+            browser = await pw.chromium.launch(headless=True)
             context = await browser.new_context()
             page = await context.new_page()
 
@@ -451,7 +456,7 @@ async def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
 
 
 
-from bson import json_util
+from bson import json_util 
 import json
 
 
@@ -467,7 +472,7 @@ def get_tweet_by_reqid(request, req_id):  # Fonction pour récupérer les tweets
     return JsonResponse(tweet_data, safe=False)
 
 
-def get_all_req(request):  # Fonction pour récupérer toutes les requêtes
+def get_all_req(request):  # Fonction pour récupérer toutes les requêtes # Fonction pour récupérer toutes les requêtes
     reqs = req_collection.find()
     req_data = [json.loads(json_util.dumps(req)) for req in reqs]
     return JsonResponse(req_data, safe=False)

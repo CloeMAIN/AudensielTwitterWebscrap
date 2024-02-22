@@ -32,10 +32,46 @@ function App() {
     setShowVisualisation(true);
   };
 
-  return (
-    <div className="main-container" style={{height: '100vh', overflowY: 'auto' }}>
-       <header className="header">
-       <div className="title">Scrapping </div>
+   return (
+    <div className="main-container" style={{ height: '100vh', overflowY: 'auto' }}>
+      <header className="header">
+      <div className="title">        </div>
+        { !showTweets && !showAnalyse && !showVisualisation && (
+          <>
+            <div className="title">Sur ce site vous pouvez </div>
+            {/* Trois blocs qui expliquent chacune des fonctionnalités */}
+            <div className="feature-explanation">
+              <div className="feature">
+                <div className="feature-icon">
+                  <Icon name='twitter' size='huge' />
+                </div>
+                <div className="feature-details">
+                  <h2>Récolte de tweets</h2>
+                  <p>Explorez et récupérez des tweets en fonction de critères spécifiques.</p>
+                </div>
+              </div>
+              <div className="feature">
+                <div className="feature-icon">
+                  <Icon name='chart bar' size='huge' />
+                </div>
+                <div className="feature-details">
+                  <h2>Analyse</h2>
+                  <p>Analysez les données collectées pour obtenir des insights précieux.</p>
+                </div>
+              </div>
+              <div className="feature">
+                <div className="feature-icon">
+                  <Icon name='eye' size='huge' />
+                </div>
+                <div className="feature-details">
+                  <h2>Visualisation</h2>
+                  <p>Visualisez les résultats de manière claire et intuitive.</p>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+        {/* Mettre les boutons au centre puis une fois l'une d'elle cliquée, les mettre toutes en haut */}
         <div className="buttons-container">
           {/* Utilisation des boutons Semantic UI React avec des icônes */}
           <Button className="black-button" circular size='massive' onClick={handleTweetsClick}>
@@ -55,16 +91,16 @@ function App() {
       <div className="content">
         {showTweets && (
           <>
-            <div className="left-bar" >
+            <div className="left-bar">
               <div className="search-tweet-bar">
                 <h2>Search Tweets</h2>
-                <SearchBar/>
+                <SearchBar />
               </div>
             </div>
             <div className="right-bar">
               <div className="search-req-bar">
                 <h2>Search Requests</h2>
-                <ReqTable/>
+                <ReqTable />
               </div>
             </div>
           </>
@@ -76,14 +112,14 @@ function App() {
           </div>
         )}
         {showVisualisation && (
+          <h1>Visualisation
           <div className="search-req-bar">
-            <h2>Visualisation</h2>
-            <VisualisationTweets/>
+            <VisualisationTweets />
           </div>
+          </h1>
         )}
       </div>
     </div>
   );
 }
-
 export default App;
