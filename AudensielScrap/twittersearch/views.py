@@ -201,7 +201,7 @@ async def fetch_comments(session, url):
         return await response.text()
 
 
-async def get_comment_tweet(bot, utilisateur, identifiant, search_url, tweet_text):
+""" async def get_comment_tweet(bot, utilisateur, identifiant, search_url, tweet_text):
     tweet_url = f'https://twitter.com/{utilisateur}/status/{identifiant}'
     async with aiohttp.ClientSession() as session:
         async with session.get(tweet_url) as response:
@@ -212,7 +212,7 @@ async def get_comment_tweet(bot, utilisateur, identifiant, search_url, tweet_tex
     print(f"Comments for tweet {identifiant}: {comments}")
 
     # Vous pouvez retourner les commentaires ou effectuer d'autres traitements ici
-    return comments, timelist
+    return comments, timelist """
 
 
 async def extract_comments(page, num_comments, tweet_text):
@@ -233,8 +233,8 @@ async def extract_comments(page, num_comments, tweet_text):
 
             for comment, time in zip(comment_elements, time_elements):
                 comment_text = comment.find(attrs={'data-testid': 'tweetText'})
-                time = time['datetime'][0:10]
                 if comment_text is not None and comment_text.get_text(strip=True) != tweet_text: # On vérifie que le commentaire n'est pas le même que le tweet
+                    time = time['datetime'][0:10]
                     comment_text = comment_text.get_text(strip=True)
                     comments.add(comment_text)  # Ajouter le commentaire à l'ensemble
                     time_set.add(time)
@@ -291,19 +291,19 @@ async def get_tweet_url(tweet_instance, utilisateur):
     global exception_counter  # Utilisez la variable globale exception_counter
     try:
         async with async_playwright() as pw:
-            browser = await pw.chromium.launch(headless=True)
+            browser = await pw.chromium.launch(headless=False)
             context = await browser.new_context()
             page = await context.new_page()
 
             await login(page)  # Assurez-vous d'attendre que la connexion se termine
-
+            
             await page.goto(f'https://twitter.com/{utilisateur}/status/{tweet_instance.identifiant}')
 
             await asyncio.sleep(3)  # Attendre 3 secondes pour que la page se charge complètement
 
             # Extraction des commentaires
-            comments = await extract_comments(page, 10, tweet_instance.text_tweet)
-            tweet_instance.comment_tweet = comments
+            comments, timelist = await extract_comments(page, 10, tweet_instance.text_tweet)
+            tweet_instance.comment_tweet.add_comment(comments, timelist)
             # Sauvegarde du tweet dans la base de données
     except Exception as e:
         print(f"Une exception s'est produite lors de la récupération des données pour le tweet {tweet_instance.identifiant}: {e}")
