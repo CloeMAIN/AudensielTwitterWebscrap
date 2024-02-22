@@ -26,12 +26,47 @@ processed_tweets = set()
 
 # fonction pour faire une pause aléatoire
 def random_sleep():
+    """Réalise une pause aléatoire entre 2 et 5 secondes. 
+
+    parameters
+    ----------
+    None.
+
+    Returns
+    -------
+    None.
+    """
     time.sleep(random.uniform(2, 5))
+    
+
+class Commentaires: # Classe pour stocker les commentaires d'un tweet
+    def __init__(self, commentaires=None, timelist=None):
+        self.commentaires = commentaires if commentaires else [] # Liste des commentaires
+        self.date_commentaire = timelist if timelist else [] # Liste des dates des commentaires
 
 
-class DonneeCollectee:  # Classe pour stocker les données d'un tweet
-    def __init__(self, text_tweet, nombre_likes, nombre_reposts, nombre_replies, nombre_views, date_tweet,
-                 identifiant_tweet, req_id, comment_tweet=None):
+    def add_comment(self,comment, timelist): 
+        """
+        Ajouter un commentaire à la liste des commentaires
+        """
+        for comm, time in zip(comment, timelist):
+
+            self.commentaires.append(comm)
+            self.date_commentaire.append(time)
+    def to_dict(self): 
+        """
+        Convertir l'objet en dictionnaire
+        """
+        #if not empty
+        if self.commentaires:
+            return [{"commentaire": c, "date_commentaire": d} for c, d in zip(self.commentaires, self.date_commentaire)]
+
+        else:
+            return [{"commentaire": "", "date_commentaire": ""}]
+
+class DonneeCollectee: # Classe pour stocker les données d'un tweet
+    
+    def __init__(self, text_tweet, nombre_likes, nombre_reposts, nombre_replies, nombre_views, date_tweet, identifiant_tweet, req_id, comment_tweet=None):
         self.text_tweet = text_tweet
         self.date_tweet = date_tweet
         self.identifiant = int(identifiant_tweet)
@@ -123,8 +158,9 @@ def save_tweets(tweets):  # Fonction pour enregistrer les tweets dans la base de
     else:
         print("L'élément n'existe pas")
         tweet_collection.insert_one(element)
-
-
+        req_collection.update_one({"req_id": req_id},
+                                {"$set":{"last_date_pulled":element["date_tweet"]}})
+        
 def get_new_proxy():
     # Lire les proxies à partir du fichier proxies.txt et en choisir un aléatoire
     return random.choice(proxies)
@@ -168,11 +204,11 @@ async def get_comment_tweet(bot, utilisateur, identifiant, search_url, tweet_tex
             html_content = await response.text()
 
     # Votre logique d'extraction des commentaires ici
-    comments = extract_comments(html_content, 10, tweet_text)
+    comments, timelist = extract_comments(html_content, 10, tweet_text)
     print(f"Comments for tweet {identifiant}: {comments}")
 
     # Vous pouvez retourner les commentaires ou effectuer d'autres traitements ici
-    return comments
+    return comments, timelist
 
 
 async def extract_comments(page, num_comments, tweet_text):
@@ -218,20 +254,21 @@ async def scrap_tweets(tweet_elements, mot_cle, nombre_tweets, nb_tweets, req_id
         likes = details[2].get_text(strip=True)
         views = details[3].get_text(strip=True) if len(details) >= 4 else ""
 
-       
+        user_info = tweet_element.find(attrs={'data-testid': 'User-Name'})
+        if user_info is None:
+            print("user_info is the prob 264")
+        user_info2 = user_info.find_all('a', href=True)
+        user_info = user_info.find('time')
+        date = user_info['datetime'][0:10]
 
-        if (mot_cle in tweet_text) and (nombre_tweets < nb_tweets) :
-            user_info = tweet_element.find(attrs={'data-testid': 'User-Name'})
-            user_info2 = user_info.find_all('a', href=True)
-            user_info = user_info.find('time')
-            date = user_info['datetime'][0:10]
-            user_info2 = user_info2[2]['href']
-            url_segments = user_info2.split("/")
-            identifiant = url_segments[3]
-            utilisateur = url_segments[1]
-            if (identifiant not in processed_tweets):
-                if not tweet_collection.find_one({"identifiant": identifiant}):
-                    tweets_instance = DonneeCollectee(tweet_text, likes, reposts, replies, views, date, identifiant,
+        user_info2 = user_info2[2]['href']
+        url_segments = user_info2.split("/")
+        identifiant = url_segments[3]
+        utilisateur = url_segments[1]
+
+        if (mot_cle in tweet_text) and (nombre_tweets < nb_tweets) and (identifiant not in processed_tweets):
+            if not tweet_collection.find_one({"identifiant": identifiant}):
+                tweets_instance = DonneeCollectee(tweet_text, likes, reposts, replies, views, date, identifiant,
                                                    req_id, [])
                     liste_tweets.append(tweets_instance)
                     utilisateurs.append(utilisateur)
@@ -287,17 +324,25 @@ async def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
         }
 
         req_collection.insert_one(req_doc)
+        if req_doc is None:
+            print("req_doc line 329 prob")
 
         start_time_total = datetime.now()
 
         browser = None  # Définir browser en dehors du bloc try/except pour garantir son existence
 
         async with async_playwright() as p:
+            if p is None:
+                print("ligne 337 prob")
             browser = await p.chromium.launch(headless=False)
+            if browser is None:
+                print("browser null ligne 340")
             page = await browser.new_page()
 
             # Se connecter à Twitter
             await login(page)
+            if page is None:
+                print("page est null ligne 343")
 
             # Recherche du mot clé
             search_url = f'https://twitter.com/search?q={mot_cle}%20until%3A{until_date}%20since%3A{since_date}&src=typed_query&f=live'
@@ -329,6 +374,8 @@ async def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
                                                                                              nombre_tweets, nb_tweets,
                                                                                              req_id, response_text,
                                                                                              liste_tweets, utilisateurs)
+                if nombre_tweets is None or response_text is None or liste_tweets is None or utilisateurs is None:
+                    print("Une variable none 376")
 
                 # Faire défiler la page
                 if not await perform_scroll(page):
@@ -358,6 +405,8 @@ async def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
                 # seulement si le tweet a au moins un commentaire
                 if tweet_instance.nombre_replies > 0:
                     tasks.append(get_tweet_url(tweet_instance, utilisateur))
+                    if tweet_instance is None or utilisateur is None :
+                        print('ligne 410 problemo')
                     # je veux quon exécute nb_tweets bots en parallèle
                     if len(tasks) == 10:
                         await asyncio.gather(*tasks)
@@ -365,13 +414,17 @@ async def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
                     print(f"Le tweet {compteur} a des commentaires.")
                 else:
                     print(f"Le tweet {compteur} n'a pas de commentaires.")
-
+            
             if len(tasks) > 0:
                 await asyncio.gather(*tasks)
+                if tasks is None:
+                    print("task ligne 416 bizarre")
 
             # sauvegarde des tweets dans la base de données
             for tweet_instance in liste_tweets:
-                save_tweets(tweet_instance)
+                save_tweets(tweet_instance,req_id)
+                if tweet_instance is None:
+                    print("ligne 428")
             end_time_comments = datetime.now()  # Temps de fin de l'extraction des commentaires
             print(f"Temps d'extraction des commentaires en minutes : {(end_time_comments - start_time_comments).seconds / 60}")
 
@@ -381,9 +434,6 @@ async def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
 
     except Exception as e:
         print(f"Une exception s'est produite : {e}")
-        print(f"Exception type : {sys.exc_info()[0]}")
-        tb = traceback.format_exc()
-        print(f"Traceback : {tb}")
         global exception_counter  # Utilisez la variable globale exception_counter
         exception_counter += 1  # Incrémentez le compteur d'exceptions
     finally:
@@ -398,6 +448,7 @@ async def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
     print(f"Nombre total d'exceptions : {exception_counter}")
 
     return JsonResponse(tweet_data, safe=False)
+
 
 
 from bson import json_util
