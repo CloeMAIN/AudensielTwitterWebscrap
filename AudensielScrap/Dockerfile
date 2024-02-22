@@ -27,7 +27,7 @@ FROM python:3.8
 WORKDIR /AudensielTwitterWebscrap
 
 # Copier les fichiers nécessaires dans le conteneur
-COPY requirements.txt .
+COPY AudensielScrap/requirements.txt .
 COPY AudensielScrap/ .
 
 # Installation des dépendances Python

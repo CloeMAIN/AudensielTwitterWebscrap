@@ -27,16 +27,7 @@ processed_tweets = set()
 
 # fonction pour faire une pause aléatoire
 def random_sleep():
-    time.sleep(random.uniform(2, 5))
-
-
-class DonneeCollectee:  # Classe pour stocker les données d'un tweet
-    def __init__(self, text_tweet, nombre_likes, nombre_reposts, nombre_replies, nombre_views, date_tweet,
-                 identifiant_tweet, req_id, comment_tweet=None):
-
-def random_sleep():
-    """
-    Réalise une pause aléatoire entre 2 et 5 secondes. 
+    """Réalise une pause aléatoire entre 2 et 5 secondes. 
 
     parameters
     ----------
@@ -47,7 +38,7 @@ def random_sleep():
     None.
     """
     time.sleep(random.uniform(2, 5))
-
+    
 
 class Commentaires: # Classe pour stocker les commentaires d'un tweet
     def __init__(self, commentaires=None, timelist=None):
@@ -171,8 +162,8 @@ def save_tweets(tweets,req_id): # Fonction pour enregistrer les tweets dans la b
     else: 
         print("L'élément n'existe pas")
         tweet_collection.insert_one(element)
-        #req_collection.find_one({"req_id": req_id},
-                                #{"$set":{"last_date_pulled":element["date_tweet"]}})
+        req_collection.update_one({"req_id": req_id},
+                                {"$set":{"last_date_pulled":element["date_tweet"]}})
         
 def get_new_proxy():
     # Lire les proxies à partir du fichier proxies.txt et en choisir un aléatoire
@@ -217,16 +208,11 @@ async def get_comment_tweet(bot, utilisateur, identifiant, search_url, tweet_tex
             html_content = await response.text()
 
     # Votre logique d'extraction des commentaires ici
-    # comments = extract_comments(html_content, 10, tweet_text)
-    comments, timelist = extract_comments(html_content, 10, tweet_text) # On extrait les commentaires
+    comments, timelist = extract_comments(html_content, 10, tweet_text)
+    print(f"Comments for tweet {identifiant}: {comments}")
 
-    # print(f"Comments for tweet {identifiant}: {comments}")
-
-    bot.get(search_url)
-    random_sleep()
-    bot.execute_script(f"window.scrollTo(0, {scroll_position_before_click});")
-    random_sleep()
-    return comments
+    # Vous pouvez retourner les commentaires ou effectuer d'autres traitements ici
+    return comments, timelist
 
 
 async def extract_comments(page, num_comments, tweet_text):
@@ -274,6 +260,8 @@ async def scrap_tweets(tweet_elements, mot_cle, nombre_tweets, nb_tweets, req_id
         views = details[3].get_text(strip=True) if len(details) >= 4 else ""
 
         user_info = tweet_element.find(attrs={'data-testid': 'User-Name'})
+        if user_info is None:
+            print("user_info is the prob 264")
         user_info2 = user_info.find_all('a', href=True)
         user_info = user_info.find('time')
         date = user_info['datetime'][0:10]
@@ -341,17 +329,25 @@ async def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
         }
 
         req_collection.insert_one(req_doc)
+        if req_doc is None:
+            print("req_doc line 329 prob")
 
         start_time_total = datetime.now()
 
         browser = None  # Définir browser en dehors du bloc try/except pour garantir son existence
 
         async with async_playwright() as p:
+            if p is None:
+                print("ligne 337 prob")
             browser = await p.chromium.launch(headless=False)
+            if browser is None:
+                print("browser null ligne 340")
             page = await browser.new_page()
 
             # Se connecter à Twitter
             await login(page)
+            if page is None:
+                print("page est null ligne 343")
 
             # Recherche du mot clé
             search_url = f'https://twitter.com/search?q={mot_cle}%20until%3A{until_date}%20since%3A{since_date}&src=typed_query&f=live'
@@ -383,6 +379,8 @@ async def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
                                                                                              nombre_tweets, nb_tweets,
                                                                                              req_id, response_text,
                                                                                              liste_tweets, utilisateurs)
+                if nombre_tweets is None or response_text is None or liste_tweets is None or utilisateurs is None:
+                    print("Une variable none 376")
 
                 # Faire défiler la page
                 if not await perform_scroll(page):
@@ -412,6 +410,8 @@ async def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
                 # seulement si le tweet a au moins un commentaire
                 if tweet_instance.nombre_replies > 0:
                     tasks.append(get_tweet_url(tweet_instance, utilisateur))
+                    if tweet_instance is None or utilisateur is None :
+                        print('ligne 410 problemo')
                     # je veux quon exécute nb_tweets bots en parallèle
                     if len(tasks) == 10:
                         await asyncio.gather(*tasks)
@@ -419,13 +419,17 @@ async def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
                     print(f"Le tweet {compteur} a des commentaires.")
                 else:
                     print(f"Le tweet {compteur} n'a pas de commentaires.")
-
+            
             if len(tasks) > 0:
                 await asyncio.gather(*tasks)
+                if tasks is None:
+                    print("task ligne 416 bizarre")
 
             # sauvegarde des tweets dans la base de données
             for tweet_instance in liste_tweets:
-                save_tweets(tweet_instance,req_id)  # Appel de la fonction save_tweets
+                save_tweets(tweet_instance,req_id)
+                if tweet_instance is None:
+                    print("ligne 428")
             end_time_comments = datetime.now()  # Temps de fin de l'extraction des commentaires
             print(f"Temps d'extraction des commentaires en minutes : {(end_time_comments - start_time_comments).seconds / 60}")
 
@@ -433,12 +437,23 @@ async def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
             print(f"Temps d'exécution total en minutes : {(end_time_total - start_time_total).seconds / 60}")
             print(f"Nombre de tweets : {nombre_tweets}")
 
-    bot.quit()
+    except Exception as e:
+        print(f"Une exception s'est produite : {e}")
+        global exception_counter  # Utilisez la variable globale exception_counter
+        exception_counter += 1  # Incrémentez le compteur d'exceptions
+    finally:
+        if browser:
+            await browser.close()
 
-    with open('twitter.html', 'w', encoding='utf-8') as f:
-        f.write(soup.prettify())
+    # Récupérer les tweets de la base de données
+    tweets = tweet_collection.find({"req_id": req_id})
+    tweet_data = [json.loads(dumps(tweet)) for tweet in tweets]
 
-    return HttpResponse(response_text, content_type='text/plain')
+    # Imprimez le nombre total d'exceptions
+    print(f"Nombre total d'exceptions : {exception_counter}")
+
+    return JsonResponse(tweet_data, safe=False)
+
 
 
 from bson import json_util 
