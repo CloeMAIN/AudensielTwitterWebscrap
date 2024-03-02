@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
 function SearchKeyWord({keyword,setKeyword}){
@@ -26,12 +26,27 @@ function SearchEndDate({endDate,setEndDate}){
     );
 }
 
+function SearchNumberTweet({numberTweet,setNumberTweet}){
+    return(
+        <form>
+            <input type="number" placeholder="Nb de tweet demander" value={numberTweet} onChange={(e) => setNumberTweet(e.target.value)}/>
+        </form>
+    );
+}
+
 function SubmitButton({handleSubmit,isLoading}){
     return(
         <button type="submit" onClick = {handleSubmit} disabled={isLoading}>Rechercher</button>
     );
 }
 
+function SearchReqId({reqId, setReqId}){
+    return(
+        <form>
+            <input type="text" placeholder="ID de la requête" value={reqId} onChange={(e) => setReqId(e.target.value)}/>
+        </form>
+    );
+}
 
 function SearchBar(){
     // Definition fonction
@@ -40,12 +55,17 @@ function SearchBar(){
     const [keyword, setKeyword] = useState('');
     const [beginDate, setBeginDate] = useState('');
     const [endDate, setEndDate] = useState('');
+    const [numberTweet, setNumberTweet] = useState('');
     const [tweets, setTweets] = useState([]);
     const [start,setStart] = useState(0);
     const [end,setEnd] = useState(5);
     const [isLoading, setIsLoading] = useState(false);
-
-
+    const [currentReqId,setCurrentReqId] = useState('');
+    const [reqId, setReqId] = useState('');
+    const [requestStatus, setRequestStatus] = useState('');
+    useEffect(() => {
+        console.log(tweets);
+    }, [tweets]);
 
 
     let now = new Date();
@@ -69,28 +89,31 @@ function SearchBar(){
         minute = String(now.getMinutes()).padStart(2, '0');
         
         req_id = `${year}${month}${day}${hour}${minute}`;
-        // Effectuer la requête get_tweets avec keyword, beginDate et endDate
+        setCurrentReqId(req_id);
+        setRequestStatus('envoyé'); // La requête est envoyée
+    
         try{
-            const response = await axios.get(`http://localhost:8000/api/search/${keyword}/${endDate}/${beginDate}`);
+            const response = await axios.get(`http://localhost:8000/api/search/${keyword}/${endDate}/${beginDate}/${numberTweet}`);
             console.log(response);
-            // On pourrait ajouter un élement montrant que la requête a été effectuée
-            // et un autre pour montrer que la requête est toujours en cours
-            // On pourrait aussi ajouter un élement montrant que la requête est terminée
-            // et un autre pour montrer que la requête a échoué
+            setRequestStatus('en cours'); // La requête est en cours
         } catch (error){
             console.error(error);
-
+            setRequestStatus('échoué'); // La requête a échoué
         } finally {
             setIsLoading(false); // Définir isLoading à false lorsque la requête est terminée
+            setRequestStatus('terminé'); // La requête est terminée
         }
     }
 
-    //Faire tourner cela toutes les 20 secondes
+    //Faire tourner cela toutes les 20 secondes ou a chaque update demandé par l'utilisateur si possible
     const handleUpdate = async (event) => {
         event.preventDefault();
+        const id = reqId !== '' ? reqId : currentReqId;
         try{
-            const response = await axios.get(`http://localhost:8000/api/search_new/${req_id}`);
+            const response = await axios.get(`http://localhost:8000/api/display_new/${id}`);
             setTweets(response.data);
+            console.log(response);
+            
         }
         catch (error){
             console.error(error);
@@ -116,11 +139,14 @@ function SearchBar(){
             <form onSubmit={handleSubmit}>
                 <SearchKeyWord keyword={keyword} setKeyword={setKeyword}/>
                 <SearchBeginDate beginDate={beginDate} setBeginDate={setBeginDate}/>
-                <SearchEndDate endDate={endDate} setEndDate={setEndDate}/> 
+                <SearchEndDate endDate={endDate} setEndDate={setEndDate}/>
+                <SearchNumberTweet numberTweet={numberTweet} setNumberTweet={setNumberTweet}/> 
                 <SubmitButton handleSubmit={handleSubmit} isLoading={isLoading}/> 
+                <SearchReqId reqId={reqId} setReqId={setReqId}/>
                 {/*On doit add la fonction handleUpdate si handleSubmit pressed
                 Soit on utilise un useState de submitPressed,setSubmitPressed
                 pour déterminer quand arrêter de faire la boucle de handleUpdate*/}
+                
             </form>
 
             <div className = "TweetTable">
@@ -129,15 +155,28 @@ function SearchBar(){
                 <button onClick={handleUpdate}>Update</button>
 
                 <div className = "TableElement">
-                    {tweets.slice(start, end).map((tweet, index) => (
-                        <div key={index}>
-                            <p>{tweet.content}</p>
-                            <p>Views: {tweet.views}</p>
-                            <p>Likes: {tweet.likes}</p>
-                            <p>Replies: {tweet.replies}</p>
-                        </div>
-                    ))}
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tweet</th>
+                                <th>Views</th>
+                                <th>Likes</th>
+                                <th>Replies</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {tweets.slice(start, end).map((tweet, index) => (
+                                <tr key={index}>
+                                    <td>{tweet.text_tweet}</td>
+                                    <td>{tweet.nombre_views}</td>
+                                    <td>{tweet.nombre_likes}</td>
+                                    <td>{tweet.nombre_replies}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
+
             </div>
         </div>
     );

@@ -1,5 +1,3 @@
-<<<<<<< Updated upstream
-=======
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useTable, usePagination, useFilters } from 'react-table';
@@ -9,9 +7,11 @@ function ReqTable() {
 
     const fetchData = async () => {
         const response = await axios.get('http://localhost:8000/api/display_req');
+        //const response = await axios.get('https://scrappertwitter.pythonanywhere.com/api/display_req');
+        
         setData(response.data);
     };
-    
+
     useEffect(() => {
         fetchData();
     }, []);
@@ -133,4 +133,3 @@ function ReqTable() {
 }
 
 export default ReqTable;
->>>>>>> Stashed changes
