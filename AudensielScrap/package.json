@@ -1,6 +1,6 @@
 {
     "scripts": {
-      "build": "next build && npx playwright install"
+      "build": "next build && python -m playwright install"
     }
   }
   
