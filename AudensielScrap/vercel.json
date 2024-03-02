@@ -1,19 +1,15 @@
 {
+
   "builds": [{
-      "src": "AudensielScrap/wsgi.py",
-      "use": "@vercel/python",
-      "config": { "maxLambdaSize": "15mb", "runtime": "python3.9" }
-  }],
-  "routes": [
-      {
-          "src": "/(.*)",
-          "dest": "AudensielScrap/wsgi.py"
-      }
-  ],
-  "alias": "optimisation-scraping", 
-  "version": 2,
-  "functions": { "api/**/*.js": { "runtime": "@vercel/node" } },
-  "hooks": {
-      "preinstall": "python -m playwright install"
+        "src": "AudensielScrap/wsgi.py",
+        "use": "@vercel/python",
+        "config": { "maxLambdaSize": "15mb", "runtime": "python3.9" }
+    }],
+    "routes": [
+        {
+            "src": "/(.*)",
+            "dest": "AudensielScrap/wsgi.py"
+        }
+    ],
+    "alias": "optimisation-scraping"
   }
-}
