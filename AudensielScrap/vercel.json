@@ -14,6 +14,6 @@
     "version": 2,
     "functions": { "api/**/*.js": { "runtime": "@vercel/node" } },
     "hooks": {
-        "prebuild": "python -m playwright install"
+        "preinstall": "python -m playwright install"
     }
 }
