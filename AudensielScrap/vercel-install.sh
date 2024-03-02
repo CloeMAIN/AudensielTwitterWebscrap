@@ -8,3 +8,6 @@ python -m playwright install
 
 # Installer les dépendances de Playwright
 python -m playwright install-deps
+
+# Lancer la construction du projet
+npm run build
