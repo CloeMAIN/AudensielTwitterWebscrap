@@ -2,6 +2,7 @@ from django.http import HttpResponse
 from bs4 import BeautifulSoup
 import time
 import random
+import traceback
 from django.shortcuts import render
 from .models import tweet_collection, req_collection
 from playwright.async_api import async_playwright
@@ -175,22 +176,32 @@ def change_proxy(page, new_proxy):
     page.set_extra_http_headers({"Proxy-Authorization": new_proxy})
 
 
-async def perform_scroll(page):
+async def perform_scroll(page, previous_tweets_elements):
     # Faire défiler la page
     await page.evaluate("window.scrollBy(0, window.innerHeight)")
 
     # Faire une pause aléatoire entre 2 et 5 secondes
     await page.wait_for_timeout(random.randint(2000, 12000))
 
-    # Attendre que de nouveaux éléments de tweet soient chargés
-    previous_last_tweet = (await page.query_selector_all('[data-testid="tweet"]'))[-1]
-    await page.evaluate("window.scrollBy(0, window.innerHeight)")
-    await page.wait_for_timeout(2000)  # Attendre un court instant
-    new_last_tweet = (await page.query_selector_all('[data-testid="tweet"]'))[-1]
+    # Récupérer les éléments de tweet
+    html_content = await page.content()
+    # Utiliser BeautifulSoup pour analyser le contenu HTML
+    soup = BeautifulSoup(html_content, 'html.parser')
+    # Ensuite, pour trouver les éléments de tweet, vous pouvez utiliser le sélecteur CSS correspondant :
+    tweet_elements = soup.select('[data-testid="tweet"]')
 
-    if new_last_tweet != previous_last_tweet:
-        print("Au moins un nouveau tweet a été chargé.")
+    for tweet_element in tweet_elements:
+        tweet_div_text = tweet_element.find(attrs={'data-testid': 'tweetText'})
+        if tweet_div_text is not None:
+            tweet_text = tweet_div_text.get_text(strip=False)
+        else:
+            continue
+    if tweet_elements != previous_tweets_elements:
+        print("Un nouveau tweet a été chargé.")
+        #print("Previous tweets: ", previous_tweets_elements)
+        #print("New tweets: ", tweet_elements)
         return True
+
     else:
         print("Aucun nouveau tweet n'a été chargé. Arrêt de l'extraction.")
         return False
@@ -261,8 +272,7 @@ async def scrap_tweets(tweet_elements, mot_cle, nombre_tweets, nb_tweets, req_id
         likes = details[2].get_text(strip=True)
         views = details[3].get_text(strip=True) if len(details) >= 4 else ""
 
-
-        if (mot_cle in tweet_text) and (nombre_tweets < nb_tweets) :
+        if (mot_cle in tweet_text) and (nombre_tweets < nb_tweets or nb_tweets == 0):
             user_info = tweet_element.find(attrs={'data-testid': 'User-Name'})
             user_info2 = user_info.find_all('a', href=True)
             user_info = user_info.find('time')
@@ -281,10 +291,11 @@ async def scrap_tweets(tweet_elements, mot_cle, nombre_tweets, nb_tweets, req_id
                     response_text += f"\n{identifiant}"
                     processed_tweets.add(identifiant)
                     print(f"Nombre de tweets : {nombre_tweets}")
-                    if nombre_tweets >= nb_tweets:
+                    if nombre_tweets >= nb_tweets and nb_tweets != 0:
                         break
 
     return nombre_tweets, response_text, liste_tweets, utilisateurs
+
 
 
 async def get_tweet_url(tweet_instance, utilisateur):
@@ -364,7 +375,7 @@ async def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
 
             start_time_extraction = datetime.now()  # Temps de début de l'extraction des tweets
 
-            while ((nombre_tweets <= nb_tweets) or (nb_tweets == 0)):
+            while True:
                 # Récupérer les éléments de tweet
                 html_content = await page.content()
                 # Utiliser BeautifulSoup pour analyser le contenu HTML
@@ -383,9 +394,9 @@ async def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
                     print("Une variable none 376")
 
                 # Faire défiler la page
-                if not await perform_scroll(page):
+                if not await perform_scroll(page, tweet_elements):
                     break  # Sortir de la boucle si aucun nouveau tweet est chargé
-                if nombre_tweets >= nb_tweets:
+                if nombre_tweets >= nb_tweets and nb_tweets != 0:
                     print("Le nombre de tweets souhaité a été atteint.")
                     break
                 random_sleep()
@@ -439,6 +450,7 @@ async def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
 
     except Exception as e:
         print(f"Une exception s'est produite : {e}")
+        traceback.print_exc()
         global exception_counter  # Utilisez la variable globale exception_counter
         exception_counter += 1  # Incrémentez le compteur d'exceptions
     finally:
