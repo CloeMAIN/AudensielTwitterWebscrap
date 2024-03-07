@@ -486,7 +486,7 @@ def get_tweet_by_reqid(request, req_id):  # Fonction pour récupérer les tweets
     return JsonResponse(tweet_data, safe=False)
 
 def get_tweet_by_mot(request, mot_cle):  # Fonction pour récupérer les tweets d'un mot cle
-    tweets = tweet_collection.find({"req_id": mot_cle})
+    tweets = tweet_collection.find({"mot_cle": mot_cle})
     tweet_data = [json.loads(json_util.dumps(tweet)) for tweet in tweets]
     return JsonResponse(tweet_data, safe=False)
 

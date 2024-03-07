@@ -79,6 +79,22 @@ function SearchReqId({ reqId, setReqId }) {
         </Form.Field>
     );
 }
+
+////AJOUT Clément
+function SearchByKeyword({searchByKeyword, setSearchByKeyword}) {
+    return (
+        <Form.Field>
+            <label>Mot clé</label>
+            <Input
+                type="text"
+                placeholder="Mot clés recherché"
+                value={searchByKeyword}
+                onChange={(e) => setSearchByKeyword(e.target.value)}
+            />
+        </Form.Field>
+    );
+}
+////
 function CommentPopup({ tweet, handleCommentClick }) {
     const [popupOpen, setPopupOpen] = useState(false);
 
@@ -121,7 +137,10 @@ function SearchBar() {
     const [currentReqId, setCurrentReqId] = useState('');
     const [reqId, setReqId] = useState('');
     const [requestStatus, setRequestStatus] = useState('');
-    
+    ////AJOUT Clément
+    const [searchByKeyword, setSearchByKeyword] = useState('');
+    const [isLoadingSearchByKeyword, setIsLoadingSearchByKeyword] = useState(false);
+    ////
     // initialisation tweets à une liste vide
 
 
@@ -190,6 +209,24 @@ function SearchBar() {
         }
     };
 
+    ////AJOUT Clément
+    const handleSubmitSearchKeyword = async (event) => {
+        event.preventDefault();
+        // Effectuer la requête get_tweets avec l'ID de la requête
+        const mot_cle = searchByKeyword
+        try {
+            setIsLoadingSearchByKeyword(true); // Définir isLoading à true lors de la requête
+            const response = await axios.get(`http://localhost:8000/api/display_tweet_by_keyword/${mot_cle}`);
+            setTweets(response.data);
+            console.log(response);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setIsLoadingSearchByKeyword(false); // Définir isLoading à false lorsque la requête est terminée
+        }
+    };
+    ////
+
     const handleNext = () => {
         setStart((oldStart) => oldStart + 5);
         setEnd((oldEnd) => oldEnd + 5);
@@ -230,6 +267,13 @@ function SearchBar() {
                 <SubmitButtonId handleSubmit={handleSubmitById} isLoading={isLoadingId} />
             </Form>
 
+            {/*AJOUT Clément*/}
+            <Form onSubmit={handleSubmitSearchKeyword} style={{ marginBottom: '20px' }}>
+                <SearchByKeyword searchByKeyword={searchByKeyword} setSearchByKeyword={setSearchByKeyword} />
+                <SubmitButtonId handleSubmit={handleSubmitSearchKeyword} isLoading={isLoadingId} />
+            </Form>
+            {/*AJOUT Clément*/}
+            
             <div className="TweetTable"  >
                 <Button onClick={handlePrevious} disabled={start === 0} style={{ marginRight: '10px' }}>Previous</Button>
                 <Button onClick={handleNext} disabled={end >= tweets.length} style={{ marginRight: '10px' }}>Next</Button>
