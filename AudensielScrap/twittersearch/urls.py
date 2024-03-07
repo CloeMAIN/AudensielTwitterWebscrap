@@ -11,6 +11,6 @@ urlpatterns = [
             #exemple: http://localhost:8000/api/display_all
             path('display_all',views.get_all_tweet, name = "display_all_tweet"),
             path('display_req',views.get_all_req, name = "display_all_req"),
-            path('display_req/<str:req_id>', views.get_req_by_id,  name = "display_req_by_reqid") 
-            
+            path('display_req/<str:req_id>', views.get_req_by_id,  name = "display_req_by_reqid"),
+            path('display_tweet_by_keyword',views.get_tweet_by_mot, name = "display_tweet_by_keyword")
         ]

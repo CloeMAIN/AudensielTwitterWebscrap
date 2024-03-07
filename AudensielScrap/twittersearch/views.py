@@ -68,11 +68,12 @@ class Commentaires: # Classe pour stocker les commentaires d'un tweet
 
 class DonneeCollectee: # Classe pour stocker les données d'un tweet
     
-    def __init__(self, text_tweet, nombre_likes, nombre_reposts, nombre_replies, nombre_views, date_tweet, identifiant_tweet, req_id, comment_tweet=None):
+    def __init__(self, text_tweet, nombre_likes, nombre_reposts, nombre_replies, nombre_views, date_tweet, identifiant_tweet, req_id, mot_cle,comment_tweet=None):
         self.text_tweet = text_tweet
         self.date_tweet = date_tweet
         self.identifiant = int(identifiant_tweet)
         self.req_id = req_id
+        self.mot_cle = mot_cle
         if nombre_likes == "":
             self.nombre_likes = 0
         else:
@@ -118,7 +119,8 @@ class DonneeCollectee: # Classe pour stocker les données d'un tweet
             "date_tweet": self.date_tweet,
             "identifiant": self.identifiant,
             "comment_tweet": self.comment_tweet.to_dict(),
-            "req_id": self.req_id
+            "req_id": self.req_id,
+            "mot_cle": self.mot_cle
         }
 
 
@@ -284,7 +286,7 @@ async def scrap_tweets(tweet_elements, mot_cle, nombre_tweets, nb_tweets, req_id
             if (identifiant not in processed_tweets):
                 if not tweet_collection.find_one({"identifiant": identifiant}):
                     tweets_instance = DonneeCollectee(tweet_text, likes, reposts, replies, views, date, identifiant,
-                                                   req_id, [])
+                                                   req_id, mot_cle, [])
                     liste_tweets.append(tweets_instance)
                     utilisateurs.append(utilisateur)
                     nombre_tweets += 1
@@ -483,6 +485,10 @@ def get_tweet_by_reqid(request, req_id):  # Fonction pour récupérer les tweets
     tweet_data = [json.loads(json_util.dumps(tweet)) for tweet in tweets]
     return JsonResponse(tweet_data, safe=False)
 
+def get_tweet_by_mot(request, mot_cle):  # Fonction pour récupérer les tweets d'un mot cle
+    tweets = tweet_collection.find({"req_id": mot_cle})
+    tweet_data = [json.loads(json_util.dumps(tweet)) for tweet in tweets]
+    return JsonResponse(tweet_data, safe=False)
 
 def get_all_req(request):  # Fonction pour récupérer toutes les requêtes # Fonction pour récupérer toutes les requêtes
     reqs = req_collection.find()

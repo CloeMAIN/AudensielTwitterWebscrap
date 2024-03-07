@@ -1,7 +1,8 @@
 AudensielScrap/twitenv
 node_modules
 __pycache__/
-AudensielScrap/__pycache__/
+AudensielScrap/twittersearch/__pycache__/
 AudensielScrap/venv/
 AudensielScrap/data/
+AudensielScrap/twittersearch/migrations/
 
