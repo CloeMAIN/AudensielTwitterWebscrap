@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import 'semantic-ui-css/semantic.min.css';
 import { Button, Icon } from 'semantic-ui-react'; // Import des boutons Semantic UI React
-import SearchBar from './Components/Recherche_tweet.js';
+import { KeywordSearch, KeywordSearchBase, IdSearch} from './Components/Recherche_tweet.js'; // Import des composants de recherche de tweets
 import ReqTable from './Components/Recherche_base.js';
 import './App.css'; // Import du fichier CSS
 import VisualisationTweets from './Components/Visualisation'; // Import du composant VisualisationTweets
@@ -89,22 +89,31 @@ function App() {
         </div>
       </header>
       <div className="content">
-        {showTweets && (
-          <>
-            <div className="left-bar">
-              <div className="search-tweet-bar">
-                <h2>Search Tweets</h2>
-                <SearchBar />
-              </div>
-            </div>
-            <div className="right-bar">
-              <div className="search-req-bar">
-                <h2>Search Requests</h2>
-                <ReqTable />
-              </div>
-            </div>
-          </>
-        )}
+      {showTweets && (
+  <div style={{ display: 'flex' }}>
+    <div style={{ flex: '1', marginRight: '20px' }}>
+      <div className="search-tweet-bar">
+        <h2>Search Tweets</h2>
+        <KeywordSearch />
+      </div>
+      <div className="search-tweet-bar">
+        <h2>Search Requests</h2>
+        <IdSearch />
+      </div>
+      <div className="search-tweet-bar">
+        <h2>Search Base</h2>
+        <KeywordSearchBase />
+      </div>
+    </div>
+    <div style={{ flex: '1' }}>
+      <div className="search-req-bar">
+        <h1>Table Requests</h1>
+        <ReqTable />
+      </div>
+    </div>
+  </div>
+)}
+
         {showAnalyse && (
           <div className="search-req-bar">
             <h2>Analyse</h2>
