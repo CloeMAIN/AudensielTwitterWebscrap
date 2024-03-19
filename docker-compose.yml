@@ -8,9 +8,21 @@ services:
       - "8000:8000"
     depends_on:
       - frontend
+    links:
+      - mongo
+
   frontend:
     build:
       context: .
       dockerfile: frontend/Dockerfile
     ports:
       - "3000:3000"
+
+  mongo:
+    build:
+      context: .
+      dockerfile:  AudensielScrap/Dockerfile-mongo
+    ports:
+      - "27017:27017"
+
+

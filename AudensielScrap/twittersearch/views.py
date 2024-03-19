@@ -304,7 +304,7 @@ async def get_tweet_url(tweet_instance, utilisateur):
     global exception_counter  # Utilisez la variable globale exception_counter
     try:
         async with async_playwright() as pw:
-            browser = await pw.chromium.launch(headless=False)
+            browser = await pw.chromium.launch(headless=True)
             context = await browser.new_context()
             page = await context.new_page()
 
@@ -352,7 +352,7 @@ async def get_tweets(request, mot_cle, until_date, since_date, nb_tweets):
         async with async_playwright() as p:
             if p is None:
                 print("ligne 337 prob")
-            browser = await p.chromium.launch(headless=False)
+            browser = await p.chromium.launch(headless=True)
             if browser is None:
                 print("browser null ligne 340")
             page = await browser.new_page()
