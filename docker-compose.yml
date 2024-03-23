@@ -8,8 +8,10 @@ services:
       - "8000:8000"
     depends_on:
       - frontend
-    links:
-      - mongo
+    environment:
+      - MONGO_URL=mongodb+srv://cloe:Webscrap23@cluster0.qnvy73r.mongodb.net/?authMechanism=SCRAM-SHA-1
+    # links:
+    #   - mongo
 
   frontend:
     build:
@@ -18,11 +20,11 @@ services:
     ports:
       - "3000:3000"
 
-  mongo:
-    build:
-      context: .
-      dockerfile:  AudensielScrap/Dockerfile-mongo
-    ports:
-      - "27017:27017"
+  # mongo:
+  #   build:
+  #     context: .
+  #     dockerfile:  AudensielScrap/Dockerfile-mongo
+  #   ports:
+  #     - "27017:27017"
 
 
