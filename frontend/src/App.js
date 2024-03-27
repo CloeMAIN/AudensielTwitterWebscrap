@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import 'semantic-ui-css/semantic.min.css';
-import { Icon, Button, Dropdown} from 'semantic-ui-react'; // Import des boutons Semantic UI React
+import { Button, Icon, Dropdown } from 'semantic-ui-react'; // Import des boutons Semantic UI React
 import { Link } from 'react-router-dom'; // Import de Link depuis React Router
 import { KeywordSearch, KeywordSearchBase, IdSearch} from './Components/Recherche_tweet.js'; // Import des composants de recherche de tweets
 import ReqTable from './Components/Recherche_base.js';
 import './App.css'; // Import du fichier CSS
 import VisualisationTweets from './Components/Visualisation'; // Import du composant VisualisationTweets
 import { set } from 'date-fns';
-
 
 function App() {
   // États pour gérer l'affichage des différents composants
@@ -38,7 +37,7 @@ function App() {
 
   const [showTweetsDropdown, setShowTweetsDropdown] = useState(false); // État pour suivre l'état d'ouverture du menu déroulant des tweets
   const [showAnalysisDropdown, setShowAnalysisDropdown] = useState(false); // État pour suivre l'état d'ouverture du menu déroulant de l'analyse
-  const [showVisualisationDropdown, setShowVisualisationDropdown] = useState(true); // État pour suivre l'état d'ouverture du menu déroulant de la visualisation
+  const [showVisualisationDropdown, setShowVisualisationDropdown] = useState(false); // État pour suivre l'état d'ouverture du menu déroulant de la visualisation
 
   const handleTweetsDropdownOpen = () => {
     setShowTweetsDropdown(!showTweetsDropdown); // Inverse l'état d'ouverture du menu déroulant des tweets lors du clic sur le bouton "Actions"
@@ -178,24 +177,26 @@ function App() {
 
    return (
     <div className="main-container" style={{ height: '100vh', overflowY: 'auto' }}>
+    {/* En-tête */}
       <header className="header">
-      {/* Bouton "Actions" avec le menu déroulant */}
-      <div className="button-container">
-      <Button className="black-button" circular size='massive' onClick={handleTweetsDropdownOpen}><Icon name='twitter' />Actions</Button>
-      {showTweetsDropdown && (
-      <Dropdown
-    className="dropdown-menu"
-    options={actionsOptions}
-    onChange={(event, data) => handleDropdownChange(event, data)} // Pass both event and data
-    onClose={() => setShowTweetsDropdown(false)}
-    open={showTweetsDropdown}
-    closeOnChange
-    selection
-  />
-      )}
+
+            {/* Bouton "Actions" avec le menu déroulant */}
+            <div className="button-container">
+            <button className="text-button"  onClick={handleTweetsDropdownOpen}><Icon name='twitter' />Actions</button>
+            {showTweetsDropdown && (
+            <Dropdown
+          className="dropdown-menu"
+          options={actionsOptions}
+          onChange={(event, data) => handleDropdownChange(event, data)} // Pass both event and data
+          onClose={() => setShowTweetsDropdown(false)}
+          open={showTweetsDropdown}
+          closeOnChange
+          selection
+        />
+            )}
       
           {/*Bouton "Analyse" avec le menu déroulant*/}
-          <Button className="black-button" circular size='massive' onClick={handleAnalysisDropdownOpen}><Icon name='chart bar'/>Analyse</Button>
+          <button className="text-button"  onClick={handleAnalysisDropdownOpen}><Icon name='chart bar' />Analyse</button>
       {showAnalysisDropdown && (
        <Dropdown
        className="dropdown-menu"
@@ -207,60 +208,63 @@ function App() {
        selection
      />
       )}
-   {/* Bouton "Visualisation" avec le menu déroulant */}
-    <Button className="black-button" circular size='massive' onClick={handleVisualisationDropdownOpen}><Icon name='eye'/>Visualisation</Button>
-    {showVisualisationDropdown && (
-      <Dropdown
-      className="dropdown-menu"
-      options={visualisationOptions}
-      onChange={(event, data) => handleDropdownChange(event, data)} // Pass both event and data
-      onClose={() => setShowVisualisationDropdown(false)}
-      open={showVisualisationDropdown}
-      closeOnChange
-      selection
-    />
-
-    )}
-</div>
-
+          {/* Bouton "Visualisation" avec le menu déroulant */}
+          <button className="text-button"  onClick={handleVisualisationDropdownOpen}><Icon name='eye' />Visualisation</button>
+        {showVisualisationDropdown && (
+          <Dropdown
+            className="dropdown-menu"
+            options={visualisationOptions}
+            onChange={(event, data) => handleDropdownChange(event, data)} // Pass both event and data
+            onClose={() => setShowVisualisationDropdown(false)}
+            open={showVisualisationDropdown}
+            closeOnChange
+            selection
+          />
+        )}
+        </div>
     </header>
         
-    { !showTweets && !showAnalyse && !showVisualisation && (
-      <>
-        <div className="title">Sur ce site vous pouvez </div>
-        {/* Trois blocs qui expliquent chacune des fonctionnalités */}
-        <div className="feature-explanation">
-          <div className="feature">
-            <div className="feature-icon">
-              <Icon name='twitter' size='huge' />
-            </div>
-            <div className="feature-details">
-              <h2>Récolte de tweets</h2>
-              <p>Explorez et récupérez des tweets en fonction de critères spécifiques.</p>
-            </div>
-          </div>
-          <div className="feature">
-            <div className="feature-icon">
-              <Icon name='chart bar' size='huge' />
-            </div>
-            <div className="feature-details">
-              <h2>Analyse</h2>
-              <p>Analysez les données collectées pour obtenir des insights précieux.</p>
-            </div>
-          </div>
-          <div className="feature">
-            <div className="feature-icon">
-              <Icon name='eye' size='huge' />
-            </div>
-            <div className="feature-details">
-              <h2>Visualisation</h2>
-              <p>Visualisez les résultats de manière claire et intuitive.</p>
-            </div>
-          </div>
+
+
+{/* Section de présentation */}
+{!showTweets && !showAnalyse && !showVisualisation && (
+  <>
+    <div className="title">Bienvenue sur notre plateforme !</div>
+    {/* Trois blocs qui expliquent chacune des fonctionnalités */}
+    <div className="feature-explanation">
+      <div className="feature">
+        <Icon name='twitter' size='huge' color='blue' />
+        <div className="feature-details">
+          <h2>Récolte de tweets</h2>
+          <p>Explorez et récupérez des tweets en fonction de critères spécifiques.</p>
         </div>
-      </>
-    )}
+      </div>
+      <div className="feature">
+        <Icon name='chart bar' size='huge' color='green' />
+        <div className="feature-details">
+          <h2>Analyse</h2>
+          <p>Analysez les données collectées pour obtenir des insights précieux.</p>
+        </div>
+      </div>
+      <div className="feature">
+        <Icon name='eye' size='huge' color='teal' />
+        <div className="feature-details">
+          <h2>Visualisation</h2>
+          <p>Visualisez les résultats de manière claire et intuitive.</p>
+        </div>
+      </div>
+    </div>
+    {/* Ajoutez des boutons ou des liens pour encourager les utilisateurs à explorer davantage */}
+    <div className="action-buttons">
+      <Button color='blue'>Commencer</Button>
+      <Button color='green'>En savoir plus</Button>
+    </div>
+  </>
+)}
+
+
   
+  {/* Contenu principal */}
   <div className="content">
   {showTweets && OptionAction1 && (
     <div style={{ display: 'flex' }}>
@@ -271,9 +275,6 @@ function App() {
       </div>
       <div style={{ flex: '1' }}>
         <Link to="/recherches-tweets">
-          <Button className="black-button" circular size='massive'>
-            Go to Recherches Tweets
-          </Button>
         </Link>
       </div>
     </div>
@@ -319,7 +320,7 @@ function App() {
       </div>
     )} */}
 
-    {OptionVisualisation1 && (
+    {showVisualisation && OptionVisualisation1 && (
       <div className="search-req-bar">
         <h2>Visualisation</h2>
         <VisualisationTweets />
