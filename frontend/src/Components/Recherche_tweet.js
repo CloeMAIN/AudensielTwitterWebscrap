@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Input, Button, Table, Icon, Form, Popup } from 'semantic-ui-react';
+import './Recherche_tweet.css';
 
 function SearchKeyWord({ keyword, setKeyword }) {
     return (
@@ -171,8 +172,9 @@ function KeywordSearch() {
     }
 
     return (
-        <div className="FormsAndTweet"style={{ display: 'block', width: '90%', height: '70vh', margin: '0 auto', overflowY: 'auto' }}>
-                <Form onSubmit={handleSubmitByKeyword} style={{ marginBottom: '20px' }}>
+        <>
+            <div className="search-tweet-bar" style={{ display: 'block', width: '100%', margin: '0 auto' }}>
+                <Form onSubmit={handleSubmitByKeyword}>
                     <SearchKeyWord keyword={keyword} setKeyword={setKeyword} />
                     <SearchDateRange
                         beginDate={beginDate}
@@ -184,92 +186,11 @@ function KeywordSearch() {
                     />
                     <SubmitButtonKeyword handleSubmit={handleSubmitByKeyword} style={{ marginBottom: '20px' }} isLoading={isLoadingKeyword} />
                 </Form>
-                <div className="TweetTable">
-                    <Button onClick={handlePrevious} disabled={start === 0} style={{ marginRight: '10px' }}>Previous</Button>
-                    <Button onClick={handleNext} disabled={end >= tweets.length} style={{ marginRight: '10px' }}>Next</Button>
-                    <Table celled>
-                        <Table.Header>
-                            <Table.Row>
-                                <Table.HeaderCell>Tweet</Table.HeaderCell>
-                                <Table.HeaderCell>Date</Table.HeaderCell>
-                                <Table.HeaderCell>Views</Table.HeaderCell>
-                                <Table.HeaderCell>Likes</Table.HeaderCell>
-                                <Table.HeaderCell>Replies</Table.HeaderCell>
-                                <Table.HeaderCell>Comments</Table.HeaderCell>
-                            </Table.Row>
-                        </Table.Header>
-                        <Table.Body>
-                            {tweets.slice(start, end).map((tweet, index) => (
-                                <Table.Row key={index}>
-                                    <Table.Cell>{tweet.text_tweet}</Table.Cell>
-                                    <Table.Cell>{tweet.date_tweet}</Table.Cell>
-                                    <Table.Cell>{tweet.nombre_views}</Table.Cell>
-                                    <Table.Cell>{tweet.nombre_likes}</Table.Cell>
-                                    <Table.Cell>{tweet.nombre_replies}</Table.Cell>
-                                    <Table.Cell>
-                                        <CommentPopup tweet={tweet} handleCommentClick={handleCommentClick} />
-                                    </Table.Cell>
-                                </Table.Row>
-                            ))}
-                        </Table.Body>
-                    </Table>
-                </div>
             </div>
-    );
-    
-}
-function KeywordSearchBase() {
-    const [keyword, setKeyword] = useState('');
-    const [beginDate, setBeginDate] = useState('');
-    const [endDate, setEndDate] = useState('');
-    const [numberTweet, setNumberTweet] = useState('');
-    const [tweets, setTweets] = useState([]);
-    const [start, setStart] = useState(0);
-    const [end, setEnd] = useState(5);
-    const [isLoadingKeyword, setIsLoadingKeyword] = useState(false);
-    const [requestStatus, setRequestStatus] = useState('');
-    const [isLoadingSearchByKeyword, setIsLoadingSearchByKeyword] = useState(false);
-    const [searchByKeyword, setSearchByKeyword] = useState('');
-    const [isLoadingId, setIsLoadingId] = useState(false);
-     ////AJOUT Clément
-    const handleSubmitSearchKeyword = async (event) => {
-    event.preventDefault();
-    // Effectuer la requête get_tweets avec l'ID de la requête
-    const mot_cle = searchByKeyword
-    try {
-        setIsLoadingSearchByKeyword(true); // Définir isLoading à true lors de la requête
-        const response = await axios.get(`http://localhost:8000/api/display_tweet_by_keyword/${mot_cle}`);
-        setTweets(response.data);
-        console.log(response);
-    } catch (error) {
-        console.error(error);
-    } finally {
-        setIsLoadingSearchByKeyword(false); // Définir isLoading à false lorsque la requête est terminée
-    }
-};
-const handleNext = () => {
-    setStart((oldStart) => oldStart + 5);
-    setEnd((oldEnd) => oldEnd + 5);
-};
+            {/* Séparateur */}
+            <hr style={{ border: '1px solid #000', marginBottom: '20px' }} />
 
-const handlePrevious = () => {
-    setStart((oldStart) => oldStart - 5);
-    setEnd((oldEnd) => oldEnd - 5);
-}
-
-const handleCommentClick = (index) => {
-    console.log('Comment popup clicked for tweet at index', index);
-}
-
-return (
-    <div className="Idresearch" style={{ display: 'block', width: '90%', height: '70vh', margin: '0 auto', overflowY: 'auto' }}>
-            {/*AJOUT Clément*/}
-            <Form onSubmit={handleSubmitSearchKeyword} style={{ marginBottom: '20px' }}>
-                <SearchByKeywords searchByKeyword={searchByKeyword} setSearchByKeyword={setSearchByKeyword} />
-                <SubmitButtonId handleSubmit={handleSubmitSearchKeyword} isLoading={isLoadingId} />
-            </Form>
-            {/*AJOUT Clément*/}
-            <div className="TweetTable">
+            <div className="result-table" style={{ height: '50vh', overflowY: 'auto' }}>
                 <Button onClick={handlePrevious} disabled={start === 0} style={{ marginRight: '10px' }}>Previous</Button>
                 <Button onClick={handleNext} disabled={end >= tweets.length} style={{ marginRight: '10px' }}>Next</Button>
                 <Table celled>
@@ -299,10 +220,96 @@ return (
                     </Table.Body>
                 </Table>
             </div>
-        </div>
-);
+        </>
+    );
 }
 
+function KeywordSearchBase() {
+    const [keyword, setKeyword] = useState('');
+    const [beginDate, setBeginDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+    const [numberTweet, setNumberTweet] = useState('');
+    const [tweets, setTweets] = useState([]);
+    const [start, setStart] = useState(0);
+    const [end, setEnd] = useState(5);
+    const [isLoadingKeyword, setIsLoadingKeyword] = useState(false);
+    const [requestStatus, setRequestStatus] = useState('');
+    const [isLoadingSearchByKeyword, setIsLoadingSearchByKeyword] = useState(false);
+    const [searchByKeyword, setSearchByKeyword] = useState('');
+    const [isLoadingId, setIsLoadingId] = useState(false);
+
+    const handleSubmitSearchKeyword = async (event) => {
+        event.preventDefault();
+        const mot_cle = searchByKeyword;
+        try {
+            setIsLoadingSearchByKeyword(true);
+            const response = await axios.get(`http://localhost:8000/api/display_tweet_by_keyword/${mot_cle}`);
+            setTweets(response.data);
+            console.log(response);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setIsLoadingSearchByKeyword(false);
+        }
+    };
+
+    const handleNext = () => {
+        setStart((oldStart) => oldStart + 5);
+        setEnd((oldEnd) => oldEnd + 5);
+    };
+
+    const handlePrevious = () => {
+        setStart((oldStart) => oldStart - 5);
+        setEnd((oldEnd) => oldEnd - 5);
+    }
+
+    const handleCommentClick = (index) => {
+        console.log('Comment popup clicked for tweet at index', index);
+    }
+
+    return (
+        <>
+            <div className="search-tweet-bar" style={{ display: 'block', width: '90%', margin: '0 auto' }}>
+                <Form onSubmit={handleSubmitSearchKeyword}>
+                    <SearchByKeywords searchByKeyword={searchByKeyword} setSearchByKeyword={setSearchByKeyword} />
+                    <SubmitButtonId handleSubmit={handleSubmitSearchKeyword} isLoading={isLoadingId} />
+                </Form>
+            </div>
+            {/* Séparateur */}
+            <hr style={{ border: '1px solid #000', marginBottom: '20px' }} />
+            <div className="result-table" style={{ height: '50vh', overflowY: 'auto' }}>
+                <Button onClick={handlePrevious} disabled={start === 0} style={{ marginRight: '10px' }}>Previous</Button>
+                <Button onClick={handleNext} disabled={end >= tweets.length} style={{ marginRight: '10px' }}>Next</Button>
+                <Table celled>
+                    <Table.Header>
+                        <Table.Row>
+                            <Table.HeaderCell>Tweet</Table.HeaderCell>
+                            <Table.HeaderCell>Date</Table.HeaderCell>
+                            <Table.HeaderCell>Views</Table.HeaderCell>
+                            <Table.HeaderCell>Likes</Table.HeaderCell>
+                            <Table.HeaderCell>Replies</Table.HeaderCell>
+                            <Table.HeaderCell>Comments</Table.HeaderCell>
+                        </Table.Row>
+                    </Table.Header>
+                    <Table.Body>
+                        {tweets.slice(start, end).map((tweet, index) => (
+                            <Table.Row key={index}>
+                                <Table.Cell>{tweet.text_tweet}</Table.Cell>
+                                <Table.Cell>{tweet.date_tweet}</Table.Cell>
+                                <Table.Cell>{tweet.nombre_views}</Table.Cell>
+                                <Table.Cell>{tweet.nombre_likes}</Table.Cell>
+                                <Table.Cell>{tweet.nombre_replies}</Table.Cell>
+                                <Table.Cell>
+                                    <CommentPopup tweet={tweet} handleCommentClick={handleCommentClick} />
+                                </Table.Cell>
+                            </Table.Row>
+                        ))}
+                    </Table.Body>
+                </Table>
+            </div>
+        </>
+    );
+}
 
 function IdSearch() {
     const [reqId, setReqId] = useState('');
@@ -341,44 +348,56 @@ function IdSearch() {
     }
 
     return (
-        <div className="Idresearch" style={{ display: 'block', width: '90%', height: '70vh', margin: '0 auto', overflowY: 'auto' }}>
-                <Form onSubmit={handleSubmitById} style={{ marginBottom: '20px' }}>
+        <>
+            {/* Barre de recherche */}
+            <div className="search-tweet-bar" style={{ display: 'block', width: '90%', margin: '0 auto' }}>
+                <Form onSubmit={handleSubmitById}>
                     <SearchReqId reqId={reqId} setReqId={setReqId} />
                     <SubmitButtonId handleSubmit={handleSubmitById} isLoading={isLoadingId} />
                 </Form>
-                <div className="TweetTable">
-                    <Button onClick={handlePrevious} disabled={start === 0} style={{ marginRight: '10px' }}>Previous</Button>
-                    <Button onClick={handleNext} disabled={end >= tweets.length} style={{ marginRight: '10px' }}>Next</Button>
-                    <Table celled>
-                        <Table.Header>
-                            <Table.Row>
-                                <Table.HeaderCell>Tweet</Table.HeaderCell>
-                                <Table.HeaderCell>Date</Table.HeaderCell>
-                                <Table.HeaderCell>Views</Table.HeaderCell>
-                                <Table.HeaderCell>Likes</Table.HeaderCell>
-                                <Table.HeaderCell>Replies</Table.HeaderCell>
-                                <Table.HeaderCell>Comments</Table.HeaderCell>
-                            </Table.Row>
-                        </Table.Header>
-                        <Table.Body>
-                            {tweets.slice(start, end).map((tweet, index) => (
-                                <Table.Row key={index}>
-                                    <Table.Cell>{tweet.text_tweet}</Table.Cell>
-                                    <Table.Cell>{tweet.date_tweet}</Table.Cell>
-                                    <Table.Cell>{tweet.nombre_views}</Table.Cell>
-                                    <Table.Cell>{tweet.nombre_likes}</Table.Cell>
-                                    <Table.Cell>{tweet.nombre_replies}</Table.Cell>
-                                    <Table.Cell>
-                                        <CommentPopup tweet={tweet} handleCommentClick={handleCommentClick} />
-                                    </Table.Cell>
-                                </Table.Row>
-                            ))}
-                        </Table.Body>
-                    </Table>
-                </div>
             </div>
+            
+            {/* Séparateur */}
+            <hr style={{ border: '1px solid #000', marginBottom: '20px' }} />
+            
+            {/* Tableau des résultats */}
+            <div className="result-table" style={{ height: '50vh', overflowY: 'auto' }}>
+                <Button onClick={handlePrevious} disabled={start === 0} style={{ marginRight: '10px' }}>Previous</Button>
+                <Button onClick={handleNext} disabled={end >= tweets.length} style={{ marginRight: '10px' }}>Next</Button>
+                <Table celled>
+                    <Table.Header>
+                        <Table.Row>
+                            <Table.HeaderCell>Tweet</Table.HeaderCell>
+                            <Table.HeaderCell>Date</Table.HeaderCell>
+                            <Table.HeaderCell>Views</Table.HeaderCell>
+                            <Table.HeaderCell>Likes</Table.HeaderCell>
+                            <Table.HeaderCell>Replies</Table.HeaderCell>
+                            <Table.HeaderCell>Comments</Table.HeaderCell>
+                        </Table.Row>
+                    </Table.Header>
+                    <Table.Body>
+                        {tweets.slice(start, end).map((tweet, index) => (
+                            <Table.Row key={index}>
+                                <Table.Cell>{tweet.text_tweet}</Table.Cell>
+                                <Table.Cell>{tweet.date_tweet}</Table.Cell>
+                                <Table.Cell>{tweet.nombre_views}</Table.Cell>
+                                <Table.Cell>{tweet.nombre_likes}</Table.Cell>
+                                <Table.Cell>{tweet.nombre_replies}</Table.Cell>
+                                <Table.Cell>
+                                    <CommentPopup tweet={tweet} handleCommentClick={handleCommentClick} />
+                                </Table.Cell>
+                            </Table.Row>
+                        ))}
+                    </Table.Body>
+                </Table>
+            </div>
+        </>
     );
+    
+    
+    
 }
+
 
 
 export { KeywordSearch, KeywordSearchBase, IdSearch};

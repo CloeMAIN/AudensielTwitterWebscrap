@@ -4,66 +4,67 @@
   flex-direction: column;
   align-items: center;
   min-height: 100vh; /* Utilisation de min-height pour assurer que le conteneur s'étende au moins sur toute la hauteur de la page */
-  background-color: #076863;; /* Violet-bleu */
+  background-color: #d3d7d7;; /* Violet-bleu */
   padding: 20px;
   text-align: center;
   width: 100vw; /* Largeur de 100vw pour remplir toute la largeur de la fenêtre visible */
 }
 
-
-/* Styles pour la barre de recherche de tweet */
-.search-tweet-bar {
-  margin-right: 100px; /* Marge à droite pour séparer les éléments */
-  margin-bottom: 50px; /* Ajout de marges pour séparer les éléments */
-  padding: 20px;
-  border-radius: 8px;
+.buttons-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
   background-color: #ffffff;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: center; /* Centrer horizontalement les boutons */
+  align-items: center;
+  padding: 15px 0; /* Ajustement de la marge intérieure */
+  z-index: 1000;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.search-tweet-bar h2 {
-  font-size: 24px;
+.text-button {
+  background-color: #f0f0f0; /* Couleur de fond initiale */
+  border: none;
+  font-size: 16px;
+  padding: 12px 20px; /* Ajustement de la taille des boutons */
+  cursor: pointer;
   color: #333333;
+  text-decoration: none;
+  transition: background-color 0.3s ease, color 0.3s ease; /* Ajouter une transition pour un effet plus fluide */
 }
 
-/* Styles pour la barre de recherche de base */
-.search-req-bar {
-  margin-left: 100px; /* Marge à gauche pour séparer les éléments */
-  margin-bottom: 50px; /* Ajout de marge en bas */
-  padding: 20px;
-  border-radius: 8px;
-  background-color: #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.text-button:not(:last-child) {
+  margin-right: 20px; /* Espacement entre les boutons */
 }
 
-.search-req-bar h2 {
-  font-size: 24px;
-  color: #333333;
-}
-
-/* Styles pour les boutons personnalisés */
-.black-button {
-  background-color: black !important;
-  color: white !important;
+.text-button:hover {
+  background-color: #d55656;
+  color: #ffffff;
 }
 
 
-/* Styles pour le conteneur des boutons */
+
+/* /* Styles pour le conteneur des boutons 
 .buttons-container {
   background-color: #076863;
   position: absolute;
-  top: 0px; /* Ajustez cette valeur selon votre préférence pour l'écart depuis le haut */
-  left: 10px; /* Ajustez cette valeur selon votre préférence pour l'écart depuis la droite */
   
-}
-/* Styles pour les boutons Semantic UI React */
+  
+} */
+
+/* Styles pour les boutons Semantic UI React 
 .buttons-container .ui.button {
-  /*couleur de fond*/
+  /*couleur de fond
   background-color: #076863;
-  font-size: 18px; /* Ajustez la taille de la police selon vos préférences */
-  border-radius: 20px; /* Ajoutez des coins arrondis */
-  padding: 10px 20px; /* Ajoutez un peu de rembourrage pour les rendre plus grands */
-}
+  font-size: 18px; /* Ajustez la taille de la police selon vos préférences 
+  border-radius: 20px; /* Ajoutez des coins arrondis 
+  padding: 10px 20px; /* Ajoutez un peu de rembourrage pour les rendre plus grands 
+} */
+
+
 /* Styles pour le titre */
 .title {
   font-size: 32px; /* Taille de la police */
@@ -83,12 +84,19 @@
   padding: 20px; /* Ajouter un espace de remplissage pour les barres latérales */
 }
 
-.search-tweet-bar,
+/* Styles pour la barre de recherche de base */
 .search-req-bar {
-  border: 1px solid #ccc; /* Ajouter une bordure pour délimiter visuellement les barres latérales */
-  padding: 20px; /* Ajouter un espace de remplissage pour les barres latérales */
-  margin-bottom: 50px; /* Ajouter un espace entre les barres latérales */
+  padding: 20px;
+  border-radius: 8px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+
+.search-req-bar h2 {
+  font-size: 24px;
+  color: #333333;
+}
+
 
 /* Style pour les blocs d'explication des fonctionnalités */
 .feature {
@@ -123,12 +131,12 @@
   text-align: center;
 }
 
-/* Style pour les boutons */
+/* /* Style pour les boutons 
 .buttons-container {
   display: flex;
   justify-content: center;
   margin-top: 20px;
-}
+} */
 
 .black-button {
   margin: 0 10px;
