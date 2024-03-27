@@ -1,0 +1,23 @@
+/* Styles pour la barre de recherche de tweet */
+.search-tweet-bar {
+    margin: 0 auto 50px; /* Marge en bas et centrage horizontal */
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 600px; /* Optionnel: limite la largeur pour une meilleure lisibilité */
+  }
+  
+  /* Ajustement du style du titre */
+  .search-tweet-bar h2 {
+    font-size: 24px;
+    color: #333333;
+  }
+  
+  /* Styles pour le tableau des résultats */
+  .result-table {
+    border-radius: 8px;
+    background-color: #ffffff;
+    padding: 20px;
+    max-width: 800px; /* Optionnel: limite la largeur pour une meilleure lisibilité */
+    margin: 0 auto; /* Centrage horizontal */
+  }
+  
