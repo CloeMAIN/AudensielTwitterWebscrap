@@ -4,81 +4,73 @@
   flex-direction: column;
   align-items: center;
   min-height: 100vh; /* Utilisation de min-height pour assurer que le conteneur s'étende au moins sur toute la hauteur de la page */
-  background-color: #076863;; /* Violet-bleu */
+  background-color: #d3d7d7;; /* Violet-bleu */
+  padding: 20px;
   text-align: center;
   width: 100vw; /* Largeur de 100vw pour remplir toute la largeur de la fenêtre visible */
 }
 
-
-/* Styles pour la barre de recherche de tweet */
-.search-tweet-bar {
-  margin-right: 100px; /* Marge à droite pour séparer les éléments */
-  margin-bottom: 50px; /* Ajout de marges pour séparer les éléments */
-  padding: 20px;
-  border-radius: 8px;
-  background-color: #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-/*Styles pour le header*/
-.header {
+.buttons-container {
   position: fixed;
-  background-color: #ffffff;
-  color: white;
+  top: 0;
+  left: 0;
   width: 100%;
-  text-align: center;
-  padding: 10px 0;
-  z-index: 1000;
-}
-
-
-.search-tweet-bar h2 {
-  font-size: 24px;
-  color: #333333;
-}
-
-/* Styles pour la barre de recherche de base */
-.search-req-bar {
-  margin-left: 100px; /* Marge à gauche pour séparer les éléments */
-  margin-bottom: 50px; /* Ajout de marge en bas */
-  padding: 20px;
-  border-radius: 8px;
   background-color: #ffffff;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: center; /* Centrer horizontalement les boutons */
+  align-items: center;
+  padding: 15px 0; /* Ajustement de la marge intérieure */
+  z-index: 1000;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.search-req-bar h2 {
-  font-size: 24px;
+.text-button {
+  background-color: #f0f0f0; /* Couleur de fond initiale */
+  border: none;
+  font-size: 16px;
+  padding: 12px 20px; /* Ajustement de la taille des boutons */
+  cursor: pointer;
   color: #333333;
+  text-decoration: none;
+  transition: background-color 0.3s ease, color 0.3s ease; /* Ajouter une transition pour un effet plus fluide */
 }
 
-/* Styles pour les boutons personnalisés */
-.black-button {
-  background-color: black !important;
-  color: white !important;
+.text-button:not(:last-child) {
+  margin-right: 20px; /* Espacement entre les boutons */
+}
+
+.text-button:hover {
+  background-color: #d55656;
+  color: #ffffff;
 }
 
 
-/* Styles pour le conteneur des boutons */
+
+/* /* Styles pour le conteneur des boutons 
 .buttons-container {
   background-color: #076863;
   position: absolute;
-  top: 0px; /* Ajustez cette valeur selon votre préférence pour l'écart depuis le haut */
-  left: 10px; /* Ajustez cette valeur selon votre préférence pour l'écart depuis la droite */
   
-}
-/* Styles pour les boutons Semantic UI React */
+  
+} */
+
+/* Styles pour les boutons Semantic UI React 
 .buttons-container .ui.button {
-  /*couleur de fond*/
+  /*couleur de fond
   background-color: #076863;
-  font-size: 18px; /* Ajustez la taille de la police selon vos préférences */
-  border-radius: 20px; /* Ajoutez des coins arrondis */
-  padding: 10px 20px; /* Ajoutez un peu de rembourrage pour les rendre plus grands */
-}
+  font-size: 18px; /* Ajustez la taille de la police selon vos préférences 
+  border-radius: 20px; /* Ajoutez des coins arrondis 
+  padding: 10px 20px; /* Ajoutez un peu de rembourrage pour les rendre plus grands 
+} */
+
+
 /* Styles pour le titre */
 .title {
   font-size: 32px; /* Taille de la police */
   font-weight: bold; /* Gras */
   color: #333333; /* Couleur du texte */
+  margin-top: 40px; /* Marge en haut */
 }
 
 
@@ -92,15 +84,19 @@
   padding: 20px; /* Ajouter un espace de remplissage pour les barres latérales */
 }
 
-.search-tweet-bar,
+/* Styles pour la barre de recherche de base */
 .search-req-bar {
-  border: 1px solid #ccc;
   padding: 20px;
-  margin-bottom: 20px;
-  width: calc(175% ); /* La largeur de la boîte sera de 100% moins 40px de marges (20px de chaque côté) */
-  margin-right: 20px; /* Marge de 20px à droite */
-  margin-top : 100px;
+  border-radius: 8px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+
+.search-req-bar h2 {
+  font-size: 24px;
+  color: #333333;
+}
+
 
 /* Style pour les blocs d'explication des fonctionnalités */
 .feature {
@@ -135,46 +131,13 @@
   text-align: center;
 }
 
-/* Style pour les boutons */
+/* /* Style pour les boutons 
 .buttons-container {
   display: flex;
   justify-content: center;
-  color: white;
   margin-top: 20px;
-  background-color: white;
-  justify-content: space-between;
-}
+} */
 
 .black-button {
-  background-color: black;
-  color: white;
-}
-/* Style pour le menu déroulant */
-.dropdown-menu {
-  position: absolute; /* Position absolue pour aligner avec le bouton */
-  top: 100%; /* Position sous le bouton */
-  left: 0; /* Aligner à gauche par défaut */
-  z-index: 999; /* Assurer que le menu est au-dessus de tout */
-  background-color: white; /* Couleur de fond */
-  border: 1px solid #ccc; /* Bordure */
-  border-radius: 4px; /* Coins arrondis */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Ombre */
-  padding: 8px; /* Espace intérieur */
-  min-width: 120px; /* Largeur minimale */
-}
-
-/* Style pour les options du menu déroulant */
-.dropdown-menu .item {
-  padding: 8px 12px; /* Espace intérieur */
-  cursor: pointer; /* Curseur au survol */
-}
-
-/* Style pour les options du menu déroulant au survol */
-.dropdown-menu .item:hover {
-  background-color: #f0f0f0; /* Couleur de fond au survol */
-}
-
-/* Style pour masquer l'en-tête */
-.dropdown-menu .header {
-  display: none;
+  margin: 0 10px;
 }
