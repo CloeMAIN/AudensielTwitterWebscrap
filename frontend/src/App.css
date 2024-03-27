@@ -5,7 +5,6 @@
   align-items: center;
   min-height: 100vh; /* Utilisation de min-height pour assurer que le conteneur s'étende au moins sur toute la hauteur de la page */
   background-color: #076863;; /* Violet-bleu */
-  padding: 20px;
   text-align: center;
   width: 100vw; /* Largeur de 100vw pour remplir toute la largeur de la fenêtre visible */
 }
@@ -20,6 +19,17 @@
   background-color: #ffffff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+/*Styles pour le header*/
+.header {
+  position: fixed;
+  background-color: #ffffff;
+  color: white;
+  width: 100%;
+  text-align: center;
+  padding: 10px 0;
+  z-index: 1000;
+}
+
 
 .search-tweet-bar h2 {
   font-size: 24px;
@@ -69,7 +79,6 @@
   font-size: 32px; /* Taille de la police */
   font-weight: bold; /* Gras */
   color: #333333; /* Couleur du texte */
-  margin-top: 40px; /* Marge en haut */
 }
 
 
@@ -85,9 +94,12 @@
 
 .search-tweet-bar,
 .search-req-bar {
-  border: 1px solid #ccc; /* Ajouter une bordure pour délimiter visuellement les barres latérales */
-  padding: 20px; /* Ajouter un espace de remplissage pour les barres latérales */
-  margin-bottom: 50px; /* Ajouter un espace entre les barres latérales */
+  border: 1px solid #ccc;
+  padding: 20px;
+  margin-bottom: 20px;
+  width: calc(175% ); /* La largeur de la boîte sera de 100% moins 40px de marges (20px de chaque côté) */
+  margin-right: 20px; /* Marge de 20px à droite */
+  margin-top : 100px;
 }
 
 /* Style pour les blocs d'explication des fonctionnalités */
@@ -127,9 +139,42 @@
 .buttons-container {
   display: flex;
   justify-content: center;
+  color: white;
   margin-top: 20px;
+  background-color: white;
+  justify-content: space-between;
 }
 
 .black-button {
-  margin: 0 10px;
+  background-color: black;
+  color: white;
+}
+/* Style pour le menu déroulant */
+.dropdown-menu {
+  position: absolute; /* Position absolue pour aligner avec le bouton */
+  top: 100%; /* Position sous le bouton */
+  left: 0; /* Aligner à gauche par défaut */
+  z-index: 999; /* Assurer que le menu est au-dessus de tout */
+  background-color: white; /* Couleur de fond */
+  border: 1px solid #ccc; /* Bordure */
+  border-radius: 4px; /* Coins arrondis */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Ombre */
+  padding: 8px; /* Espace intérieur */
+  min-width: 120px; /* Largeur minimale */
+}
+
+/* Style pour les options du menu déroulant */
+.dropdown-menu .item {
+  padding: 8px 12px; /* Espace intérieur */
+  cursor: pointer; /* Curseur au survol */
+}
+
+/* Style pour les options du menu déroulant au survol */
+.dropdown-menu .item:hover {
+  background-color: #f0f0f0; /* Couleur de fond au survol */
+}
+
+/* Style pour masquer l'en-tête */
+.dropdown-menu .header {
+  display: none;
 }
