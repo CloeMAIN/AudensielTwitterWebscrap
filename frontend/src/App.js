@@ -272,6 +272,10 @@ function App() {
         <div className="search-tweet-bar">
           <KeywordSearch />
         </div>
+        <div className="search-req-bar">
+            <h2>Search Base</h2>
+            <ReqTable />
+          </div>
       </div>
       <div style={{ flex: '1' }}>
         <Link to="/recherches-tweets">
@@ -286,6 +290,10 @@ function App() {
             <h2>Search Requests</h2>
             <IdSearch />
           </div>
+          <div className="search-req-bar">
+            <h2>Search Base</h2>
+            <ReqTable />
+          </div>
         </div>
       </div>
     )}
@@ -295,6 +303,10 @@ function App() {
           <div className="search-tweet-bar">
             <h2>Search Base</h2>
             <KeywordSearchBase />
+          </div>
+          <div className="search-req-bar">
+            <h2>Search Base</h2>
+            <ReqTable />
           </div>
         </div>
       </div>
